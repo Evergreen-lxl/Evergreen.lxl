@@ -81,11 +81,8 @@ function Highlight:tokenize_line(idx, state)
 		local endPoint = n:end_point()
 
 		if startPoint.row == i and endPoint.row == i then
-			print(idx, string.format('"%s"', self.doc.lines[idx]:sub(0, startPoint.column)))
-			print(gotline == false)
 			-- indentation pass
 			if (startPoint.column > 1 or self.doc.lines[idx]:sub(0, startPoint.column):find('\t')) and gotline == false then
-				print('adding indents')
 				table.insert(res.tokens, 'normal')
 				table.insert(res.tokens, self.doc.lines[idx]:sub(0, startPoint.column))
 			end
@@ -99,7 +96,7 @@ function Highlight:tokenize_line(idx, state)
 				if startPoint.column - lnEndPoint.column >= 1 then
 					table.insert(res.tokens, 'normal')
 					-- todo: use whitespace from line
-					table.insert(res.tokens, (" "):rep(startPoint.column - lnEndPoint.column))
+					table.insert(res.tokens, (' '):rep(startPoint.column - lnEndPoint.column))
 				end
 			end
 			gotline = true
