@@ -1,16 +1,21 @@
 # Evergreen
 > 🌳 Treesitter support for Lite XL.
 
-This is a plugn which adds Treesitter support to Lite XL
+This is a plugn which adds Treesitter support to Lite XL. It is work
+in progress, definitely not user friendly yet and has a few glaring
+bugs.
 
-This is VERY work in progress, and not the type where it's usable with some
-bugs here and there; it is inefficient and also makes the doc look like a
-mess.
+Currently it only does syntax highlighting, but will be the backbone
+for an easy Lite XL treesitter interface in the future.
 
-So if you want to help, file some PRs!
+# Showcase
+
+| Without Evergreen                              | With Evergreen                                 |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![](https://safe.kashima.moe/6b3frqkk0q93.png) | ![](https://safe.kashima.moe/97eefjivjyza.png) |
 
 # Setup
-Currently this only works with Go files. So for a sample, checkout
+This only works with Go files at the moment. So for a sample, checkout
 the [Hilbish](https://github.com/Rosettea/Hilbish) repo.
 
 Also only tested on Lite XL master.
