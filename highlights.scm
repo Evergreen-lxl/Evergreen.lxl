@@ -108,10 +108,6 @@
 ] @include
 
 [
-  " "
-] @whitespace
-
-[
   "else"
   "case"
   "switch"

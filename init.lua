@@ -64,9 +64,9 @@ end
 local oldTokenize = Highlight.tokenize_line
 function Highlight:tokenize_line(idx, state)
 	if not self.doc.treesit then return oldTokenize(self, idx, state) end
-	idx = idx - 1
 
 	local res = {}
+	local i = idx - 1
 	res.init_state = state
 	res.text = self.doc.lines[idx]
 	res.state = 0
@@ -75,19 +75,29 @@ function Highlight:tokenize_line(idx, state)
 	local linenodes = {}
 	local gotline = false
 	for n, nName in my_query:capture(self.doc.tstree:root()) do
+		--local replace = false
+		local lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
 
-		if startPoint.row == idx and endPoint.row == idx then
+		if startPoint.row == i and endPoint.row == i then
+			if lastNode then
+				local lnStartPoint = lastNode:start_point()
+				local lnEndPoint = lastNode:end_point()
+
+				if lnStartPoint.column == startPoint.column and lnEndPoint.column == endPoint.column then goto continue end
+			end
 			gotline = true
 			table.insert(linenodes, {node = n, name = nName})
 			table.insert(res.tokens, nName)
-			table.insert(res.tokens, n:source())
+			table.insert(res.tokens, self.doc.lines[idx]:sub(startPoint.column, endPoint.column))
 		elseif gotline then
 			break
 		end
+
+		::continue::
 	end
-	core.log(common.serialize(res.tokens))
+	print(common.serialize(res.tokens))
 
 	return res
 end
