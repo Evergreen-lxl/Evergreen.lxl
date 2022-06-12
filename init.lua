@@ -74,6 +74,7 @@ function Highlight:tokenize_line(idx, state)
 
 	local linenodes = {}
 	local gotline = false
+	print(idx)
 	for n, nName in my_query:capture(self.doc.tstree:root()) do
 		--local replace = false
 		local lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
@@ -91,7 +92,12 @@ function Highlight:tokenize_line(idx, state)
 				local lnStartPoint = lastNode:start_point()
 				local lnEndPoint = lastNode:end_point()
 
-				if lnStartPoint.column == startPoint.column and lnEndPoint.column == endPoint.column then goto continue end
+				if lnStartPoint.column == startPoint.column and lnEndPoint.column == endPoint.column then
+					linenodes[#linenodes] = {node = n, name = nName}
+					res.tokens[#res.tokens - 1] = nName
+					res.tokens[#res.tokens] = n:source()
+					goto continue
+				end
 				-- whitespace between cur and last node
 				if startPoint.column - lnEndPoint.column >= 1 then
 					table.insert(res.tokens, 'normal')
