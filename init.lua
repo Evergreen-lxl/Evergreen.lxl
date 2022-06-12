@@ -4,6 +4,8 @@ package.cpath = package.cpath .. ';' .. HOME .. '.luarocks/lib64/lua/5.4/?.so;'
 .. HOME .. '.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?.so'
 
 local ltreesitter = require 'ltreesitter'
+local core = require 'core'
+local common = require 'core.common'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
 
@@ -54,14 +56,21 @@ function Doc:new(filename, abs_filename, new_file)
 		local ext = filename:match '^.+(%..+)$'
 		if ext and ext:sub(2) == 'go' then
 			self.treesit = true
-			self.tstree = go:parse_string(table.concat(self.lines, '\n'))
+			self.tstree = go:parse_string(table.concat(self.lines, ''))
 		end
 	end
 end
 
-local oldTokenize = Highlight.each_token
-function Highlight:each_token(idx)
-	if not self.doc.treesit then return oldTokenize(self, idx) end
+local oldTokenize = Highlight.tokenize_line
+function Highlight:tokenize_line(idx, state)
+	if not self.doc.treesit then return oldTokenize(self, idx, state) end
+	idx = idx - 1
+
+	local res = {}
+	res.init_state = state
+	res.text = self.doc.lines[idx]
+	res.state = 0
+	res.tokens = {}
 
 	local linenodes = {}
 	local gotline = false
@@ -72,15 +81,13 @@ function Highlight:each_token(idx)
 		if startPoint.row == idx and endPoint.row == idx then
 			gotline = true
 			table.insert(linenodes, {node = n, name = nName})
+			table.insert(res.tokens, nName)
+			table.insert(res.tokens, n:source())
 		elseif gotline then
 			break
 		end
 	end
+	core.log(common.serialize(res.tokens))
 
-	return coroutine.wrap(function()
-		for _, n in ipairs(linenodes) do
-			-- todo: what is even the state for
-			coroutine.yield(-1, n.name, n.node:source())
-		end
-	end)
+	return res
 end
