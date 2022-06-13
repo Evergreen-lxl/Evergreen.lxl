@@ -87,17 +87,24 @@ function Doc:new(filename, abs_filename, new_file)
 		end
 
 		if self.ts then
+			self.wholeDoc = table.concat(self.lines, '')
 			self.treesit = true
-			self.ts.tree = self.ts.parser:parse_string(table.concat(self.lines, ''))
+			self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
 			self.ts.query = self.ts.parser:query(highlightQuery(ext:sub(2)))
+			self.ts.mlNodes = {}
 		end
 	end
 end
 
 local oldDocChange = Doc.on_text_change
 function Doc:on_text_change(type)
-	-- todo: edit self.ts.tree
 	oldDocChange(self, type)
+	if self.treesit then
+		-- todo: use tree edit instead of reparsing
+		print('change', type)
+		self.wholeDoc = table.concat(self.lines, '')
+		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
+	end
 end
 
 local oldTokenize = Highlight.tokenize_line
@@ -116,7 +123,6 @@ function Highlight:tokenize_line(idx, state)
 	print(idx)
 	local lastNode
 	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root()) do
-		--local replace = false
 		lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
