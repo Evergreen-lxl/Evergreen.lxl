@@ -19,6 +19,7 @@ future.
 # Supported Languages
 - [x] Go
 - [x] Lua
+
 If you want more languages supported, open an issue.
 
 # Requirements
