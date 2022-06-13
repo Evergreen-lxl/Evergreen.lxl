@@ -143,7 +143,10 @@
 
 (true) @boolean
 (false) @boolean
-(nil) @constant.builtin
+[
+  (nil)
+  (iota)
+] @constant.builtin
 
 (comment) @comment
 
