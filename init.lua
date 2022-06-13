@@ -14,15 +14,26 @@ local function localPath()
    return str:match '(.*[/\\])'
 end
 
+local parsers = {}
 
-local ff = io.open(string.format('%s/highlights.scm', localPath()))
-local highlights = ff:read '*a'
-ff:close()
+-- get parser based on ext
+-- todo: pass doc and make it get based on either ext or actual file type
+local function getParser(ext)
+	if parsers[ext] then return parsers[ext] end
 
-local go = ltreesitter.require 'go'
---local tree = go:parse_string(source)
+	local ok, parser = pcall(ltreesitter.require, ext)
 
-local my_query = go:query(highlights)
+	if not ok then
+		core.log(string.format('Could not load parser for %s', ext))
+		print(ok, parser)
+		return nil
+	else
+		core.log(string.format('Loaded parser for %s', ext))
+		parsers[ext] = parser
+	end
+
+	return parser
+end
 
 --[[
 for capture, capture_name in my_query:capture(tree:root()) do
@@ -49,16 +60,44 @@ local function nodes(t)
 end
 ]]--
 
+local function highlightQuery(ext)
+	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ext))
+	if not ff then
+		return ""
+	end
+
+	local highlights = ff:read '*a'
+	print(highlights)
+	ff:close()
+
+	return highlights
+end
+
 local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
 	if filename then
 		local ext = filename:match '^.+(%..+)$'
-		if ext and ext:sub(2) == 'go' then
+		if not ext then return end
+
+		if ext:sub(2) == 'go' then
+			self.ts = {parser = getParser 'go'}
+		elseif ext:sub(2) == 'lua' then
+			self.ts = {parser = getParser 'lua'}
+		end
+
+		if self.ts then
 			self.treesit = true
-			self.tstree = go:parse_string(table.concat(self.lines, ''))
+			self.ts.tree = self.ts.parser:parse_string(table.concat(self.lines, ''))
+			self.ts.query = self.ts.parser:query(highlightQuery(ext:sub(2)))
 		end
 	end
+end
+
+local oldDocChange = Doc.on_text_change
+function Doc:on_text_change(type)
+	-- todo: edit self.ts.tree
+	oldDocChange(self, type)
 end
 
 local oldTokenize = Highlight.tokenize_line
@@ -75,7 +114,8 @@ function Highlight:tokenize_line(idx, state)
 	local linenodes = {}
 	local gotline = false
 	print(idx)
-	for n, nName in my_query:capture(self.doc.tstree:root()) do
+	local lastNode
+	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root()) do
 		--local replace = false
 		local lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
 		local startPoint = n:start_point()
