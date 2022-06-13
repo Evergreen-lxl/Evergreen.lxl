@@ -117,7 +117,7 @@ function Highlight:tokenize_line(idx, state)
 	local lastNode
 	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root()) do
 		--local replace = false
-		local lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
+		lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
 
@@ -155,6 +155,16 @@ function Highlight:tokenize_line(idx, state)
 
 		::continue::
 	end
+	if lastNode then
+		local lnEndPoint = lastNode:end_point()
+		local endCol = lnEndPoint.column + 1
+		if endCol < string.len(self.doc.lines[idx]) then
+			print(endCol)
+			table.insert(res.tokens, 'normal')
+			table.insert(res.tokens, self.doc.lines[idx]:sub(endCol))
+		end
+	end
+
 	print(common.serialize(res.tokens))
 
 	return res
