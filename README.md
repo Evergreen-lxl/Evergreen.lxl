@@ -21,18 +21,9 @@ If you want more languages supported, open an issue.
 
 # Requirements
 - Lite XL master (upcoming 2.1 release)
-- Luarocks
+- ltreesitter master via Luarocks (`luarocks install ltreesitter --local --dev`)
 
 # Setup
-```
-luarocks install ltreesitter --local --dev
-cd ~
-mkdir -p ~/.local/share/tree-sitter/parsers
-cd ~/.local/share/tree-sitter/parsers
-git clone https://github.com/tree-sitter/tree-sitter-go
-cd tree-sitter-go
-make
-```
 - Git clone Evergreen into Lite XL plugins directory
 Or symlink:  
 ```
@@ -41,5 +32,19 @@ git clone https://github.com/TorchedSammy/Evergreen.lxl
 ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
+Install supported treesitter parsers to `~/.local/share/tree-sitter/parsers`, example:
+```
+mkdir -p ~/.local/share/tree-sitter/parsers/
+cd ~/.local/share/tree-sitter/parsers
+git clone https://github.com/tree-sitter/tree-sitter-go
+cd tree-sitter-go
+make
+```
+
+Some (or most) parsers may not have a Makefile. So instead of running make,
+you can run this command:  
+```
+gcc -o parser.so -shared src/*.c -Os -I./src -fPIC
+```
 # License
 MIT
