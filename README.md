@@ -2,11 +2,13 @@
 > 🌳 Treesitter support for Lite XL.
 
 Evergreen adds syntax highlighting to Lite XL via Treesitter. It is *very*
-work in progress. There are a few glaring bugs (#1 of them :^)) and it is
+work in progress. There are a few glaring bugs ([#1] of them :^)) and it is
 not as efficient as it can be.
 
 It will be the backbone for an easy Lite XL treesitter interface in the
 future.
+
+[#1]: https://github.com/TorchedSammy/Evergreen.lxl/issues/1
 
 # Showcase
 
