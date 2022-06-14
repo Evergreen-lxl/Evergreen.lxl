@@ -113,66 +113,58 @@ function Highlight:tokenize_line(idx, state)
 	if not self.doc.treesit then return oldTokenize(self, idx, state) end
 
 	local res = {}
-	local i = idx - 1
 	res.init_state = state
 	res.text = self.doc.lines[idx]
 	res.state = 0
 	res.tokens = {}
 
-	local linenodes = {}
-	local gotline = false
-	print(idx)
-	local lastNode
+	local i = idx - 1
+	local tokens = res.tokens
+	local currentLine = self.doc.lines[idx]
+	local lastNode, lastStartPoint, lastEndPoint
 	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root()) do
-		lastNode = (#linenodes ~= 0 and linenodes[#linenodes] or {})['node']
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
 
-		if startPoint.row == i and endPoint.row == i then
-			-- indentation pass
-			if (startPoint.column > 1 or self.doc.lines[idx]:sub(0, startPoint.column):find('\t')) and gotline == false then
-				table.insert(res.tokens, 'normal')
-				table.insert(res.tokens, self.doc.lines[idx]:sub(0, startPoint.column))
+		if i > startPoint.row and i > endPoint.row then goto continue end
+		if startPoint.row > i then break end
+
+		-- single line token
+		if startPoint.row == endPoint.row then
+			if not lastNode and startPoint.column > 0 then
+				-- first node
+				tokens[#tokens+1] = 'normal'
+				tokens[#tokens+1] = currentLine:sub(1, startPoint.column)
+			elseif lastNode and lastEndPoint.row == startPoint.row and startPoint.column - lastEndPoint.column > 0 then
+				-- node from the same line and have spaces between them
+				tokens[#tokens+1] = 'normal'
+				tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
 			end
 
-			if lastNode then
-				local lnStartPoint = lastNode:start_point()
-				local lnEndPoint = lastNode:end_point()
+			local append_idx =
+				(lastNode and lastStartPoint.column == startPoint.column and lastEndPoint.column == endPoint.column) -- if the nodes overlap
+					and (#tokens - 1) -- replace the old one
+					or (#tokens + 1)  -- create a new token
+			tokens[append_idx] = nName
+			tokens[append_idx+1] = n:source()
 
-				if lnStartPoint.column == startPoint.column and lnEndPoint.column == endPoint.column then
-					linenodes[#linenodes] = {node = n, name = nName}
-					res.tokens[#res.tokens - 1] = nName
-					res.tokens[#res.tokens] = n:source()
-					goto continue
-				end
-				-- whitespace between cur and last node
-				if startPoint.column - lnEndPoint.column >= 1 then
-					table.insert(res.tokens, 'normal')
-					-- todo: use whitespace from line
-					table.insert(res.tokens, (' '):rep(startPoint.column - lnEndPoint.column))
-				end
+		elseif i >= startPoint.row and i <= endPoint.row then
+			tokens[#tokens+1] = nName
+			if i == startPoint.row then
+				tokens[#tokens+1] = currentLine:sub(startPoint.column + 1, -2) -- from node start to EOL
+			elseif i == endPoint.row then
+				tokens[#tokens+1] = currentLine:sub(1, endPoint.column) -- from line start to end of node
+			else
+				tokens[#tokens+1] = currentLine
 			end
-			gotline = true
-			table.insert(linenodes, {node = n, name = nName})
-			table.insert(res.tokens, nName)
-			table.insert(res.tokens, n:source())
-		elseif gotline then
-			break
 		end
 
+		lastNode = n
+		lastStartPoint = startPoint
+		lastEndPoint = endPoint
 		::continue::
 	end
-	if lastNode then
-		local lnEndPoint = lastNode:end_point()
-		local endCol = lnEndPoint.column + 1
-		if endCol < string.len(self.doc.lines[idx]) then
-			print(endCol)
-			table.insert(res.tokens, 'normal')
-			table.insert(res.tokens, self.doc.lines[idx]:sub(endCol))
-		end
-	end
 
-	print(common.serialize(res.tokens))
-
+	print(idx, common.serialize(tokens))
 	return res
 end
