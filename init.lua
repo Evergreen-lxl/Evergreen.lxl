@@ -118,6 +118,9 @@ function Highlight:tokenize_line(idx, state)
 	res.state = 0
 	res.tokens = {}
 
+	print(idx)
+
+
 	local i = idx - 1
 	local tokens = res.tokens
 	local currentLine = self.doc.lines[idx]
@@ -164,6 +167,6 @@ function Highlight:tokenize_line(idx, state)
 		::continue::
 	end
 
-	print(idx, common.serialize(tokens))
+	print(common.serialize(tokens))
 	return res
 end
