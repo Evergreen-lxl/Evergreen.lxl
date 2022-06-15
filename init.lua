@@ -167,6 +167,11 @@ function Highlight:tokenize_line(idx, state)
 		::continue::
 	end
 
+	if lastNode and i == lastEndPoint.row then
+		tokens[#tokens+1] = 'normal'
+		tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1)
+	end
+
 	print(common.serialize(tokens))
 	return res
 end
