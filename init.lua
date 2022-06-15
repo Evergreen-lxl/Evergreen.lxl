@@ -87,7 +87,7 @@ function Doc:new(filename, abs_filename, new_file)
 			self.ts = {parser = getParser 'lua'}
 		end
 
-		if self.ts.parser then
+		if self.ts and self.ts.parser then
 			self.wholeDoc = table.concat(self.lines, '')
 			self.treesit = true
 			self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
