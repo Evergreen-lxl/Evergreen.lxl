@@ -172,6 +172,3 @@
 (number) @number
 
 (string) @string
-
-;; Error
-(ERROR) @error
