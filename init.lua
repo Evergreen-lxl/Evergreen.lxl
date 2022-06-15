@@ -129,18 +129,17 @@ function Highlight:tokenize_line(idx, state)
 		if i > startPoint.row and i > endPoint.row then goto continue end
 		if startPoint.row > i then break end
 
-		-- single line token
-		if startPoint.row == endPoint.row then
-			if not lastNode and startPoint.column > 0 then
-				-- first node
+		if not lastNode and startPoint.column > 0 and i == startPoint.row then
+			-- first node
 				tokens[#tokens+1] = 'normal'
 				tokens[#tokens+1] = currentLine:sub(1, startPoint.column)
-			elseif lastNode and lastEndPoint.row == startPoint.row and startPoint.column - lastEndPoint.column > 0 then
-				-- node from the same line and have spaces between them
-				tokens[#tokens+1] = 'normal'
-				tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
-			end
+		elseif lastNode and lastEndPoint.row == startPoint.row and startPoint.column - lastEndPoint.column > 0 then
+			tokens[#tokens+1] = 'normal'
+			tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
+		end
 
+		-- single line token
+		if startPoint.row == endPoint.row then
 			local append_idx =
 				(lastNode and lastStartPoint.column == startPoint.column and lastEndPoint.column == endPoint.column) -- if the nodes overlap
 					and (#tokens - 1) -- replace the old one
