@@ -172,6 +172,11 @@ function Highlight:tokenize_line(idx, state)
 		tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1)
 	end
 
+	if not lastNode then
+		tokens[#tokens+1] = 'normal'
+		tokens[#tokens+1] = currentLine
+	end
+
 	print(common.serialize(tokens))
 	return res
 end
