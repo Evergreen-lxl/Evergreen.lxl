@@ -151,6 +151,11 @@ function Highlight:tokenize_line(idx, state)
 			tokens[append_idx+1] = n:source()
 
 		elseif i >= startPoint.row and i <= endPoint.row then
+			if self.lines[idx] then
+				self:invalidate(idx + 1)
+				common.splice(self.lines, idx + 1, #self.lines - 1)
+			end
+
 			tokens[#tokens+1] = nName
 			if i == startPoint.row then
 				tokens[#tokens+1] = currentLine:sub(startPoint.column + 1, -2) -- from node start to EOL
