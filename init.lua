@@ -97,23 +97,83 @@ function Doc:new(filename, abs_filename, new_file)
 	end
 end
 
+local function splitLines(text)
+  local res = {}
+  for line in (text .. "\n"):gmatch("(.-)\n") do
+    table.insert(res, line)
+  end
+  return res
+end
+
+function table.slice(tbl, first, last, step)
+  local sliced = {}
+
+  for i = first or 1, last or #tbl, step or 1 do
+    sliced[#sliced+1] = tbl[i]
+  end
+
+  return sliced
+end
+
+local function accumulateLen(tbl)
+	local len = 0
+
+	for _, entry in ipairs(tbl) do
+		len = len + entry:len()
+	end
+
+	return len
+end
+
 local oldDocInsert = Doc.insert
 function Doc:insert(line, col, text)
+	self.wholeDoc = table.concat(self.lines, '')
 	if self.treesit then
 		line, col = self:sanitize_position(line, col)
 
+		local lines = self.lines
+		lines[line] = lines[line]--:sub(0, col)
+		print(lines[line])
+
+		local lns = table.slice(lines, 1, line - 1)
+		local start = accumulateLen(lns)
+
+		local tsLine, tsCol = line - 1, col - 1
+
 		self.ts.tree:edit_s {
 			-- TODO: byte offsets
-			-- start_byte = 0,
-			-- old_end_byte = 0,
-			-- new_end_byte = 0,
-			start_point = {row = line, column = col},
-			old_end_point = {row = line, column = col},
-			new_end_point = {row = line, column = col + 1}
+			start_byte = start,
+			old_end_byte = start,
+			new_end_byte = start + text:len(),
+			start_point = {row = tsLine, column = tsCol},
+			old_end_point = {row = tsLine, column = tsCol},
+			new_end_point = {row = tsLine, column = tsCol + text:len()}
 		}
 	end
 	oldDocInsert(self, line, col, text)
 end
+
+-- TODO: appropriate this for delete
+--[[
+local oldDocRemove = Doc.remove
+function Doc:remove(line, col, text)
+	self.wholeDoc = table.concat(self.lines, '')
+	if self.treesit then
+		local start, tsLine, tsCol = offsets(self, line, col, text)
+
+		self.ts.tree:edit_s {
+			-- TODO: byte offsets
+			start_byte = start,
+			old_end_byte = start,
+			new_end_byte = start - text:len(),
+			start_point = {row = tsLine, column = tsCol},
+			old_end_point = {row = tsLine, column = tsCol},
+			new_end_point = {row = tsLine, column = tsCol - text:len()}
+		}
+	end
+	oldDocRemove(self, line, col, text)
+end
+]]--
 
 local oldDocChange = Doc.on_text_change
 function Doc:on_text_change(typ)
