@@ -17,8 +17,8 @@ future.
 | ![](https://safe.kashima.moe/6b3frqkk0q93.png) | ![](https://safe.kashima.moe/97eefjivjyza.png) |
 
 # Supported Languages
-- [x] Go ([tree-sitter-go])
-- [x] Lua ([tree-sitter-lua], the one from MunifTanjim, not the other ones)
+- [x] [Go](tree-sitter-go)
+- [x] [Lua](tree-sitter-lua) (only the one from MunifTanjim works)
 
 If you want more languages supported, open an issue.
 
