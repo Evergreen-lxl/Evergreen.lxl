@@ -97,14 +97,31 @@ function Doc:new(filename, abs_filename, new_file)
 	end
 end
 
-local oldDocChange = Doc.on_text_change
-function Doc:on_text_change(type)
-	oldDocChange(self, type)
+local oldDocInsert = Doc.insert
+function Doc:insert(line, col, text)
 	if self.treesit then
-		-- todo: use tree edit instead of reparsing
-		print('change', type)
+		line, col = self:sanitize_position(line, col)
+
+		self.ts.tree:edit_s {
+			-- TODO: byte offsets
+			-- start_byte = 0,
+			-- old_end_byte = 0,
+			-- new_end_byte = 0,
+			start_point = {row = line, column = col},
+			old_end_point = {row = line, column = col},
+			new_end_point = {row = line, column = col + 1}
+		}
+	end
+	oldDocInsert(self, line, col, text)
+end
+
+local oldDocChange = Doc.on_text_change
+function Doc:on_text_change(typ)
+	oldDocChange(self, typ)
+	if self.treesit then
+		print('change', typ)
 		self.wholeDoc = table.concat(self.lines, '')
-		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
+		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
 	end
 end
 
@@ -132,6 +149,7 @@ function Highlight:tokenize_line(idx, state)
 		if i > startPoint.row and i > endPoint.row then goto continue end
 		if startPoint.row > i then break end
 
+		print(n, startPoint.column, endPoint.column, nName)
 		if not lastNode and startPoint.column > 0 and i == startPoint.row then
 			-- first node
 				tokens[#tokens+1] = 'normal'
@@ -169,6 +187,7 @@ function Highlight:tokenize_line(idx, state)
 		lastNode = n
 		lastStartPoint = startPoint
 		lastEndPoint = endPoint
+
 		::continue::
 	end
 
