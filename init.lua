@@ -132,7 +132,7 @@ function Doc:insert(line, col, text)
 		line, col = self:sanitize_position(line, col)
 
 		local lines = self.lines
-		lines[line] = lines[line]--:sub(0, col)
+		lines[line] = lines[line]--:sub(0, col - 1)
 		print(lines[line])
 
 		local lns = table.slice(lines, 1, line - 1)
@@ -143,8 +143,8 @@ function Doc:insert(line, col, text)
 		self.ts.tree:edit_s {
 			-- TODO: byte offsets
 			start_byte = start,
-			old_end_byte = start,
-			new_end_byte = start + text:len(),
+			old_end_byte = start + lines[line]:sub(col):len(),
+			new_end_byte = start + lines[line]:sub(col):len() + text:len(),
 			start_point = {row = tsLine, column = tsCol},
 			old_end_point = {row = tsLine, column = tsCol},
 			new_end_point = {row = tsLine, column = tsCol + text:len()}
@@ -153,27 +153,40 @@ function Doc:insert(line, col, text)
 	oldDocInsert(self, line, col, text)
 end
 
+local function sortPositions(line1, col1, line2, col2)
+	if line1 > line2 or line1 == line2 and col1 > col2 then
+		return line2, col2, line1, col1
+	end
+	return line1, col1, line2, col2
+end
+
 -- TODO: appropriate this for delete
---[[
 local oldDocRemove = Doc.remove
-function Doc:remove(line, col, text)
+function Doc:remove(line1, col1, line2, col2)
 	self.wholeDoc = table.concat(self.lines, '')
 	if self.treesit then
-		local start, tsLine, tsCol = offsets(self, line, col, text)
+		line1, col1 = self:sanitize_position(line1, col1)
+		line2, col2 = self:sanitize_position(line2, col2)
+		line1, col1, line2, col2 = sortPositions(line1, col1, line2, col2)
+
+		local text = self:get_text(line1, col1, line2, col2)
+		local lns = table.slice(self.lines, 1, line1 - 1)
+		--local before = table.slice(self.lines, 1, line1 - 1)
+		--local after = tab
+		local start = accumulateLen(lns)
 
 		self.ts.tree:edit_s {
 			-- TODO: byte offsets
 			start_byte = start,
-			old_end_byte = start,
+			old_end_byte = start + text:len(),
 			new_end_byte = start - text:len(),
-			start_point = {row = tsLine, column = tsCol},
-			old_end_point = {row = tsLine, column = tsCol},
-			new_end_point = {row = tsLine, column = tsCol - text:len()}
+			start_point = {row = line2 - 1, column = col2 - 1},
+			old_end_point = {row = line1 - 1, column = col1 - 1},
+			new_end_point = {row = line2 - 1, column = col2 - 1}
 		}
 	end
-	oldDocRemove(self, line, col, text)
+	oldDocRemove(self, line1, col1, line2, col2)
 end
-]]--
 
 local oldDocChange = Doc.on_text_change
 function Doc:on_text_change(typ)
@@ -209,7 +222,6 @@ function Highlight:tokenize_line(idx, state)
 		if i > startPoint.row and i > endPoint.row then goto continue end
 		if startPoint.row > i then break end
 
-		print(n, startPoint.column, endPoint.column, nName)
 		if not lastNode and startPoint.column > 0 and i == startPoint.row then
 			-- first node
 				tokens[#tokens+1] = 'normal'
