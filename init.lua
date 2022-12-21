@@ -117,9 +117,9 @@ local function accumulateLen(tbl)
 	return len
 end
 
-local oldDocInsert = Doc.insert
-function Doc:insert(line, col, text)
-	oldDocInsert(self, line, col, text)
+local oldDocInsert = Doc.raw_insert
+function Doc:raw_insert(line, col, text, undo, time)
+	oldDocInsert(self, line, col, text, undo, time)
 
 	self.wholeDoc = table.concat(self.lines, '')
 
@@ -154,9 +154,9 @@ local function sortPositions(line1, col1, line2, col2)
 end
 
 -- TODO: appropriate this for delete
-local oldDocRemove = Doc.remove
-function Doc:remove(line1, col1, line2, col2)
-	oldDocRemove(self, line1, col1, line2, col2)
+local oldDocRemove = Doc.raw_remove
+function Doc:raw_remove(line1, col1, line2, col2, undo, time)
+	oldDocRemove(self, line1, col1, line2, col2, undo, time)
 
 	self.wholeDoc = table.concat(self.lines, '')
 
