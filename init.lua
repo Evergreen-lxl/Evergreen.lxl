@@ -105,6 +105,8 @@ function Doc:on_text_change(type)
 		print('change', type)
 		self.wholeDoc = table.concat(self.lines, '')
 		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
+
+		self.highlighter:soft_reset()
 	end
 end
 
