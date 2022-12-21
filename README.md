@@ -17,8 +17,8 @@ future.
 | ![](https://safe.kashima.moe/6b3frqkk0q93.png) | ![](https://safe.kashima.moe/97eefjivjyza.png) |
 
 # Supported Languages
-- [x] Go
-- [x] Lua
+- [x] [Go][tree-sitter-go]
+- [x] [Lua][tree-sitter-lua] (only the one from MunifTanjim works)
 
 If you want more languages supported, open an issue.
 
@@ -51,3 +51,7 @@ gcc -o parser.so -shared src/*.c -Os -I./src -fPIC
 ```
 # License
 MIT
+
+
+[tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
+[tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
