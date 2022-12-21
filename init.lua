@@ -97,22 +97,14 @@ function Doc:new(filename, abs_filename, new_file)
 	end
 end
 
-local function splitLines(text)
-  local res = {}
-  for line in (text .. "\n"):gmatch("(.-)\n") do
-    table.insert(res, line)
-  end
-  return res
-end
-
 function table.slice(tbl, first, last, step)
-  local sliced = {}
+	local sliced = {}
 
-  for i = first or 1, last or #tbl, step or 1 do
-    sliced[#sliced+1] = tbl[i]
-  end
+	for i = first or 1, last or #tbl, step or 1 do
+		sliced[#sliced+1] = tbl[i]
+	end
 
-  return sliced
+	return sliced
 end
 
 local function accumulateLen(tbl)
@@ -127,30 +119,31 @@ end
 
 local oldDocInsert = Doc.insert
 function Doc:insert(line, col, text)
+	oldDocInsert(self, line, col, text)
+
 	self.wholeDoc = table.concat(self.lines, '')
+
 	if self.treesit then
 		line, col = self:sanitize_position(line, col)
 
-		local lines = self.lines
-		lines[line] = lines[line]--:sub(0, col - 1)
-		print(lines[line])
-
-		local lns = table.slice(lines, 1, line - 1)
+		local lns = table.slice(self.lines, 1, line - 1)
 		local start = accumulateLen(lns)
 
+		local tsByte = start + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
 		self.ts.tree:edit_s {
-			-- TODO: byte offsets
-			start_byte = start,
-			old_end_byte = start + lines[line]:sub(col):len(),
-			new_end_byte = start + lines[line]:sub(col):len() + text:len(),
-			start_point = {row = tsLine, column = tsCol},
-			old_end_point = {row = tsLine, column = tsCol},
-			new_end_point = {row = tsLine, column = tsCol + text:len()}
+			start_byte    = tsByte,
+			old_end_byte  = tsByte,
+			new_end_byte  = tsByte + text:len(),
+			start_point   = { row = tsLine, column = tsCol },
+			old_end_point = { row = tsLine, column = tsCol },
+			new_end_point = { row = tsLine, column = tsCol + text:len() },
 		}
+		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
+
+		self.highlighter:soft_reset()
 	end
-	oldDocInsert(self, line, col, text)
 end
 
 local function sortPositions(line1, col1, line2, col2)
@@ -163,38 +156,32 @@ end
 -- TODO: appropriate this for delete
 local oldDocRemove = Doc.remove
 function Doc:remove(line1, col1, line2, col2)
+	oldDocRemove(self, line1, col1, line2, col2)
+
 	self.wholeDoc = table.concat(self.lines, '')
+
 	if self.treesit then
 		line1, col1 = self:sanitize_position(line1, col1)
 		line2, col2 = self:sanitize_position(line2, col2)
 		line1, col1, line2, col2 = sortPositions(line1, col1, line2, col2)
-
 		local text = self:get_text(line1, col1, line2, col2)
+
 		local lns = table.slice(self.lines, 1, line1 - 1)
-		--local before = table.slice(self.lines, 1, line1 - 1)
-		--local after = tab
 		local start = accumulateLen(lns)
 
-		self.ts.tree:edit_s {
-			-- TODO: byte offsets
-			start_byte = start,
-			old_end_byte = start + text:len(),
-			new_end_byte = start - text:len(),
-			start_point = {row = line2 - 1, column = col2 - 1},
-			old_end_point = {row = line1 - 1, column = col1 - 1},
-			new_end_point = {row = line2 - 1, column = col2 - 1}
-		}
-	end
-	oldDocRemove(self, line1, col1, line2, col2)
-end
+		local tsByte = start + col1 - 1
 
-local oldDocChange = Doc.on_text_change
-function Doc:on_text_change(typ)
-	oldDocChange(self, typ)
-	if self.treesit then
-		print('change', typ)
-		self.wholeDoc = table.concat(self.lines, '')
+		self.ts.tree:edit_s {
+			start_byte    = tsByte,
+			old_end_byte  = tsByte + text:len(),
+			new_end_byte  = tsByte,
+			start_point   = { row = line1 - 1, column = col1 - 1 },
+			old_end_point = { row = line2 - 1, column = col2 - 1 },
+			new_end_point = { row = line1 - 1, column = col1 - 1 },
+		}
 		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
+
+		self.highlighter:soft_reset()
 	end
 end
 
