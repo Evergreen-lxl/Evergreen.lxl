@@ -97,16 +97,92 @@ function Doc:new(filename, abs_filename, new_file)
 	end
 end
 
-local oldDocChange = Doc.on_text_change
-function Doc:on_text_change(type)
-	oldDocChange(self, type)
+function table.slice(tbl, first, last, step)
+	local sliced = {}
+
+	for i = first or 1, last or #tbl, step or 1 do
+		sliced[#sliced+1] = tbl[i]
+	end
+
+	return sliced
+end
+
+local function accumulateLen(tbl)
+	local len = 0
+
+	for _, entry in ipairs(tbl) do
+		len = len + entry:len()
+	end
+
+	return len
+end
+
+local oldDocInsert = Doc.raw_insert
+function Doc:raw_insert(line, col, text, undo, time)
+	oldDocInsert(self, line, col, text, undo, time)
+
+	self.wholeDoc = table.concat(self.lines, '')
+
 	if self.treesit then
-		-- todo: use tree edit instead of reparsing
-		print('change', type)
-		self.wholeDoc = table.concat(self.lines, '')
-		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
+		line, col = self:sanitize_position(line, col)
+
+		local lns = table.slice(self.lines, 1, line - 1)
+		local start = accumulateLen(lns)
+
+		local tsByte = start + col - 1
+		local tsLine, tsCol = line - 1, col - 1
+
+		self.ts.tree:edit_s {
+			start_byte    = tsByte,
+			old_end_byte  = tsByte,
+			new_end_byte  = tsByte + text:len(),
+			start_point   = { row = tsLine, column = tsCol },
+			old_end_point = { row = tsLine, column = tsCol },
+			new_end_point = { row = tsLine, column = tsCol + text:len() },
+		}
+		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
 
 		self.highlighter:soft_reset()
+	end
+end
+
+local function sortPositions(line1, col1, line2, col2)
+	if line1 > line2 or line1 == line2 and col1 > col2 then
+		return line2, col2, line1, col1
+	end
+	return line1, col1, line2, col2
+end
+
+-- TODO: appropriate this for delete
+local oldDocRemove = Doc.raw_remove
+function Doc:raw_remove(line1, col1, line2, col2, undo, time)
+	if self.treesit then
+		line1, col1 = self:sanitize_position(line1, col1)
+		line2, col2 = self:sanitize_position(line2, col2)
+		line1, col1, line2, col2 = sortPositions(line1, col1, line2, col2)
+		local text = self:get_text(line1, col1, line2, col2)
+
+		oldDocRemove(self, line1, col1, line2, col2, undo, time)
+		self.wholeDoc = table.concat(self.lines, '')
+
+		local lns = table.slice(self.lines, 1, line1 - 1)
+		local start = accumulateLen(lns)
+
+		local tsByte = start + col1 - 1
+
+		self.ts.tree:edit_s {
+			start_byte    = tsByte,
+			old_end_byte  = tsByte + text:len(),
+			new_end_byte  = tsByte,
+			start_point   = { row = line1 - 1, column = col1 - 1 },
+			old_end_point = { row = line2 - 1, column = col2 - 1 },
+			new_end_point = { row = line1 - 1, column = col1 - 1 },
+		}
+		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
+
+		self.highlighter:soft_reset()
+	else
+		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
 end
 
@@ -171,6 +247,7 @@ function Highlight:tokenize_line(idx, state)
 		lastNode = n
 		lastStartPoint = startPoint
 		lastEndPoint = endPoint
+
 		::continue::
 	end
 
