@@ -156,15 +156,14 @@ end
 -- TODO: appropriate this for delete
 local oldDocRemove = Doc.raw_remove
 function Doc:raw_remove(line1, col1, line2, col2, undo, time)
-	oldDocRemove(self, line1, col1, line2, col2, undo, time)
-
-	self.wholeDoc = table.concat(self.lines, '')
-
 	if self.treesit then
 		line1, col1 = self:sanitize_position(line1, col1)
 		line2, col2 = self:sanitize_position(line2, col2)
 		line1, col1, line2, col2 = sortPositions(line1, col1, line2, col2)
 		local text = self:get_text(line1, col1, line2, col2)
+
+		oldDocRemove(self, line1, col1, line2, col2, undo, time)
+		self.wholeDoc = table.concat(self.lines, '')
 
 		local lns = table.slice(self.lines, 1, line1 - 1)
 		local start = accumulateLen(lns)
@@ -182,6 +181,8 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
 
 		self.highlighter:soft_reset()
+	else
+		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
 end
 
