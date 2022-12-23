@@ -229,7 +229,7 @@ function Highlight:tokenize_line(idx, state)
 					and (#tokens - 1) -- replace the old one
 					or (#tokens + 1)  -- create a new token
 			tokens[append_idx] = nName
-			tokens[append_idx+1] = n:source()
+			tokens[append_idx+1] = currentLine:sub(startPoint.column + 1, endPoint.column)
 
 		elseif i >= startPoint.row and i <= endPoint.row then
 			if self.lines[idx] then
