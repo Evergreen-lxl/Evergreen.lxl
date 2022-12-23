@@ -74,6 +74,13 @@ local function highlightQuery(ext)
 	return highlights
 end
 
+local function tsInput(lines)
+	return function(_, point)
+		return (point.row < #lines)
+			and (lines[point.row + 1]:sub(point.column + 1)) or nil
+	end
+end
+
 local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
@@ -88,9 +95,8 @@ function Doc:new(filename, abs_filename, new_file)
 		end
 
 		if self.ts and self.ts.parser then
-			self.wholeDoc = table.concat(self.lines, '')
 			self.treesit = true
-			self.ts.tree = self.ts.parser:parse_string(self.wholeDoc)
+			self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines))
 			self.ts.query = self.ts.parser:query(highlightQuery(ext:sub(2)))
 			self.ts.mlNodes = {}
 		end
@@ -121,8 +127,6 @@ local oldDocInsert = Doc.raw_insert
 function Doc:raw_insert(line, col, text, undo, time)
 	oldDocInsert(self, line, col, text, undo, time)
 
-	self.wholeDoc = table.concat(self.lines, '')
-
 	if self.treesit then
 		line, col = self:sanitize_position(line, col)
 
@@ -140,7 +144,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 			old_end_point = { row = tsLine, column = tsCol },
 			new_end_point = { row = tsLine, column = tsCol + text:len() },
 		}
-		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
+		self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines), self.ts.tree)
 
 		self.highlighter:soft_reset()
 	end
@@ -163,7 +167,6 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 		local text = self:get_text(line1, col1, line2, col2)
 
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
-		self.wholeDoc = table.concat(self.lines, '')
 
 		local lns = table.slice(self.lines, 1, line1 - 1)
 		local start = accumulateLen(lns)
@@ -178,7 +181,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 			old_end_point = { row = line2 - 1, column = col2 - 1 },
 			new_end_point = { row = line1 - 1, column = col1 - 1 },
 		}
-		self.ts.tree = self.ts.parser:parse_string(self.wholeDoc, self.ts.tree)
+		self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines), self.ts.tree)
 
 		self.highlighter:soft_reset()
 	else
@@ -226,7 +229,7 @@ function Highlight:tokenize_line(idx, state)
 					and (#tokens - 1) -- replace the old one
 					or (#tokens + 1)  -- create a new token
 			tokens[append_idx] = nName
-			tokens[append_idx+1] = n:source()
+			tokens[append_idx+1] = currentLine:sub(startPoint.column + 1, endPoint.column)
 
 		elseif i >= startPoint.row and i <= endPoint.row then
 			if self.lines[idx] then
