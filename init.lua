@@ -193,19 +193,22 @@ local oldTokenize = Highlight.tokenize_line
 function Highlight:tokenize_line(idx, state)
 	if not self.doc.treesit then return oldTokenize(self, idx, state) end
 
+	local function isBefore(curStart, prevEnd)
+		return
+			(prevEnd.row > curStart.row) or
+			((prevEnd.row == curStart.row) and (prevEnd.column > curStart.column))
+	end
+
 	local res = {}
 	res.init_state = state
 	res.text = self.doc.lines[idx]
 	res.state = 0
 	res.tokens = {}
 
-	print(idx)
-
-
 	local i = idx - 1
 	local tokens = res.tokens
 	local currentLine = self.doc.lines[idx]
-	local lastNode, lastStartPoint, lastEndPoint
+	local lastNode, lastName, lastStartPoint, lastEndPoint
 	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root()) do
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
@@ -224,14 +227,24 @@ function Highlight:tokenize_line(idx, state)
 
 		-- single line token
 		if startPoint.row == endPoint.row then
-			local append_idx =
-				(lastNode and lastStartPoint.column == startPoint.column and lastEndPoint.column == endPoint.column) -- if the nodes overlap
-					and (#tokens - 1) -- replace the old one
-					or (#tokens + 1)  -- create a new token
-			tokens[append_idx] = nName
-			tokens[append_idx+1] = currentLine:sub(startPoint.column + 1, endPoint.column)
-
+			if lastNode and isBefore(startPoint, lastEndPoint) then
+				if (lastName ~= "error") then
+					local append_idx = #tokens - 1
+					tokens[append_idx] = nName
+					tokens[append_idx + 1] = currentLine:sub(startPoint.column + 1, endPoint.column)
+				else
+					goto continue
+				end
+			else
+				local append_idx = #tokens + 1
+				tokens[append_idx] = nName
+				tokens[append_idx + 1] = currentLine:sub(startPoint.column + 1, endPoint.column)
+			end
 		elseif i >= startPoint.row and i <= endPoint.row then
+			if lastNode and (lastName == "error") and isBefore(startPoint, lastEndPoint) then
+				goto continue
+			end
+
 			if self.lines[idx] then
 				self:invalidate(idx + 1)
 				common.splice(self.lines, idx + 1, #self.lines - 1)
@@ -248,6 +261,7 @@ function Highlight:tokenize_line(idx, state)
 		end
 
 		lastNode = n
+		lastName = nName
 		lastStartPoint = startPoint
 		lastEndPoint = endPoint
 
@@ -264,6 +278,5 @@ function Highlight:tokenize_line(idx, state)
 		tokens[#tokens+1] = currentLine
 	end
 
-	print(common.serialize(tokens))
 	return res
 end
