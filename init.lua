@@ -143,6 +143,18 @@ local function accumulateLen(tbl)
 	return len
 end
 
+local function incrementalHighlight(doc)
+	local old = doc.ts.tree
+	doc.ts.tree = doc.ts.parser:parse_with(tsInput(doc.lines), doc.ts.tree)
+
+	for _, p in ipairs(old:get_changed_ranges(doc.ts.tree)) do
+		for i = p.start_point.row + 1, p.end_point.row + 1 do
+			doc.highlighter.lines[i] = false
+		end
+		doc.highlighter:invalidate(p.start_point.row + 1)
+	end
+end
+
 local oldDocInsert = Doc.raw_insert
 function Doc:raw_insert(line, col, text, undo, time)
 	oldDocInsert(self, line, col, text, undo, time)
@@ -164,9 +176,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 			old_end_point = { row = tsLine, column = tsCol },
 			new_end_point = { row = tsLine, column = tsCol + text:len() },
 		}
-		self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines), self.ts.tree)
-
-		self.highlighter:soft_reset()
+		incrementalHighlight(self)
 	end
 end
 
@@ -201,9 +211,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 			old_end_point = { row = line2 - 1, column = col2 - 1 },
 			new_end_point = { row = line1 - 1, column = col1 - 1 },
 		}
-		self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines), self.ts.tree)
-
-		self.highlighter:soft_reset()
+		incrementalHighlight(self)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
@@ -229,12 +237,18 @@ function Highlight:tokenize_line(idx, state)
 	local tokens = res.tokens
 	local currentLine = self.doc.lines[idx]
 	local lastNode, lastName, lastStartPoint, lastEndPoint
-	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root()) do
+	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root(), {
+		row = i,
+		column = 0
+	}, {
+		row = i,
+		column = #currentLine - 1
+	}) do
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
 
-		if i > startPoint.row and i > endPoint.row then goto continue end
-		if startPoint.row > i then break end
+		if i > endPoint.row then goto continue end
+		if i < startPoint.row then break end
 
 		if not lastNode and startPoint.column > 0 and i == startPoint.row then
 			-- first node
@@ -266,7 +280,6 @@ function Highlight:tokenize_line(idx, state)
 			end
 
 			if self.lines[idx] then
-				self:invalidate(idx + 1)
 				common.splice(self.lines, idx + 1, #self.lines - 1)
 			end
 
