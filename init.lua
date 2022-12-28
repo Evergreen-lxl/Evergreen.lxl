@@ -15,6 +15,20 @@ local function localPath()
    return str:match '(.*[/\\])'
 end
 
+local function tru(tbl)
+	local t = {}
+
+	for _, k in ipairs(tbl) do
+		t[k] = true
+	end
+
+	return t
+end
+
+local validExts = tru {
+	'lua',
+	'go'
+}
 local parsers = {}
 
 -- get parser based on ext
@@ -88,10 +102,8 @@ function Doc:new(filename, abs_filename, new_file)
 		local ext = filename:match '^.+(%..+)$'
 		if not ext then return end
 
-		if ext:sub(2) == 'go' then
-			self.ts = {parser = getParser 'go'}
-		elseif ext:sub(2) == 'lua' then
-			self.ts = {parser = getParser 'lua'}
+		if validExts[ext:sub(2)] then
+			self.ts = {parser = getParser(ext:sub(2))}
 		end
 
 		if self.ts and self.ts.parser then
