@@ -82,7 +82,6 @@ local function highlightQuery(ext)
 	end
 
 	local highlights = ff:read '*a'
-	print(highlights)
 	ff:close()
 
 	return highlights
