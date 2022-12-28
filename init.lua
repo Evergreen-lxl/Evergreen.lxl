@@ -1,8 +1,17 @@
 -- mod-version:2 -- lite-xl 2.0
-HOME = (HOME or os.getenv 'HOME') .. '/'
-package.cpath = package.cpath .. ';' .. HOME .. '.luarocks/lib64/lua/5.4/?.so;'
-.. HOME .. '.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?.so;'
-.. HOME .. '.local/share/tree-sitter/parsers/tree-sitter-?/parser.so'
+local home = HOME or os.getenv 'HOME'
+local function appendPaths(paths)
+	for _, path in ipairs(paths) do
+		package.cpath = package.cpath .. ';' .. path:gsub('~', home)
+	end
+end
+
+appendPaths {
+	'~/.luarocks/lib/lua/5.4/?.so',
+	'~/.luarocks/lib64/lua/5.4/?.so',
+	'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?.so',
+	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser.so'
+}
 
 local ltreesitter = require 'ltreesitter'
 local core = require 'core'
