@@ -1,4 +1,4 @@
--- mod-version:2 -- lite-xl 2.0
+-- mod-version:3
 local home = HOME or os.getenv 'HOME'
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
