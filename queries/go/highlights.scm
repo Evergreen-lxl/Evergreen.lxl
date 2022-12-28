@@ -148,3 +148,5 @@
 ] @constant.builtin
 
 (comment) @comment
+
+(ERROR) @error
