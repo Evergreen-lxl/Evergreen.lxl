@@ -195,8 +195,8 @@ function Highlight:tokenize_line(idx, state)
 
 	local function isBefore(curStart, prevEnd)
 		return
-			(prevEnd.row > curStart.row) or
-			((prevEnd.row == curStart.row) and (prevEnd.column > curStart.column))
+			prevEnd.row > curStart.row or
+			(prevEnd.row == curStart.row and prevEnd.column > curStart.column)
 	end
 
 	local res = {}
@@ -218,17 +218,17 @@ function Highlight:tokenize_line(idx, state)
 
 		if not lastNode and startPoint.column > 0 and i == startPoint.row then
 			-- first node
-				tokens[#tokens+1] = 'normal'
-				tokens[#tokens+1] = currentLine:sub(1, startPoint.column)
+				tokens[#tokens + 1] = 'normal'
+				tokens[#tokens + 1] = currentLine:sub(1, startPoint.column)
 		elseif lastNode and lastEndPoint.row == startPoint.row and startPoint.column - lastEndPoint.column > 0 then
-			tokens[#tokens+1] = 'normal'
-			tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
+			tokens[#tokens + 1] = 'normal'
+			tokens[#tokens + 1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
 		end
 
 		-- single line token
 		if startPoint.row == endPoint.row then
 			if lastNode and isBefore(startPoint, lastEndPoint) then
-				if (lastName ~= "error") then
+				if lastName ~= "error" then
 					local append_idx = #tokens - 1
 					tokens[append_idx] = nName
 					tokens[append_idx + 1] = currentLine:sub(startPoint.column + 1, endPoint.column)
@@ -241,7 +241,7 @@ function Highlight:tokenize_line(idx, state)
 				tokens[append_idx + 1] = currentLine:sub(startPoint.column + 1, endPoint.column)
 			end
 		elseif i >= startPoint.row and i <= endPoint.row then
-			if lastNode and (lastName == "error") and isBefore(startPoint, lastEndPoint) then
+			if lastNode and lastName == "error" and isBefore(startPoint, lastEndPoint) then
 				goto continue
 			end
 
@@ -250,13 +250,13 @@ function Highlight:tokenize_line(idx, state)
 				common.splice(self.lines, idx + 1, #self.lines - 1)
 			end
 
-			tokens[#tokens+1] = nName
+			tokens[#tokens + 1] = nName
 			if i == startPoint.row then
-				tokens[#tokens+1] = currentLine:sub(startPoint.column + 1, -2) -- from node start to EOL
+				tokens[#tokens + 1] = currentLine:sub(startPoint.column + 1, -2) -- from node start to EOL
 			elseif i == endPoint.row then
-				tokens[#tokens+1] = currentLine:sub(1, endPoint.column) -- from line start to end of node
+				tokens[#tokens + 1] = currentLine:sub(1, endPoint.column) -- from line start to end of node
 			else
-				tokens[#tokens+1] = currentLine
+				tokens[#tokens + 1] = currentLine
 			end
 		end
 
