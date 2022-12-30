@@ -12,6 +12,7 @@ It is work in progress, but functions well.
 
 # Supported Languages
 - [x] [C][tree-sitter-c]
+- [x] [C++][tree-sitter-cpp]
 - [x] [Go][tree-sitter-go]
 - [x] [Lua][tree-sitter-lua]
 
@@ -58,5 +59,6 @@ gcc -o parser.so -shared src/*.c -Os -I./src -fPIC
 MIT
 
 [tree-sitter-c]: https://github.com/tree-sitter/tree-sitter-c
+[tree-sitter-cpp]: https://github.com/tree-sitter/tree-sitter-cpp
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
