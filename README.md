@@ -11,6 +11,7 @@ It is work in progress, but functions well.
 | ![](https://safe.kashima.moe/6b3frqkk0q93.png) | ![](https://safe.kashima.moe/97eefjivjyza.png) |
 
 # Supported Languages
+- [x] [C][tree-sitter-c]
 - [x] [Go][tree-sitter-go]
 - [x] [Lua][tree-sitter-lua]
 
@@ -56,5 +57,6 @@ gcc -o parser.so -shared src/*.c -Os -I./src -fPIC
 # License
 MIT
 
+[tree-sitter-c]: https://github.com/tree-sitter/tree-sitter-c
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
