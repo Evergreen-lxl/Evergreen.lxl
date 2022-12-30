@@ -20,25 +20,14 @@ local command = require 'core.command'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
 
+local languages = require 'plugins.evergreen.languages'
+require 'plugins.evergreen.installer'
+
 local function localPath()
    local str = debug.getinfo(2, 'S').source:sub(2)
    return str:match '(.*[/\\])'
 end
 
-local function tru(tbl)
-	local t = {}
-
-	for _, k in ipairs(tbl) do
-		t[k] = true
-	end
-
-	return t
-end
-
-local validExts = tru {
-	'lua',
-	'go'
-}
 local parsers = {}
 
 -- get parser based on ext
@@ -86,7 +75,7 @@ function Doc:new(filename, abs_filename, new_file)
 		local ext = filename:match '^.+(%..+)$'
 		if not ext then return end
 
-		if validExts[ext:sub(2)] then
+		if languages.exts[ext:sub(2)] then
 			self.ts = {parser = getParser(ext:sub(2))}
 		end
 
