@@ -7,6 +7,7 @@
 ; Identifiers
 
 (type_identifier) @type
+(type_spec name: (type_identifier) @type.definition)
 (field_identifier) @property
 (identifier) @variable
 (package_identifier) @namespace
@@ -14,17 +15,19 @@
 (parameter_declaration (identifier) @parameter)
 (variadic_parameter_declaration (identifier) @parameter)
 
+(label_name) @label
+
 (const_spec
   name: (identifier) @constant)
 
 ; Function calls
 
 (call_expression
-  function: (identifier) @function)
+  function: (identifier) @function.call)
 
 (call_expression
   function: (selector_expression
-    field: (field_identifier) @method))
+    field: (field_identifier) @method.call))
 
 ; Function definitions
 
@@ -33,6 +36,9 @@
 
 (method_declaration
   name: (field_identifier) @method)
+
+(method_spec 
+  name: (field_identifier) @method) 
 
 ; Operators
 
@@ -114,7 +120,6 @@
   "if"
  ] @conditional
 
-
 ; Delimiters
 
 "." @punctuation.delimiter
@@ -135,6 +140,7 @@
 (interpreted_string_literal) @string
 (raw_string_literal) @string
 (rune_literal) @string
+(escape_sequence) @string.escape
 
 (int_literal) @number
 (float_literal) @float
@@ -142,11 +148,18 @@
 
 (true) @boolean
 (false) @boolean
-[
-  (nil)
-  (iota)
-] @constant.builtin
+(nil) @constant.builtin
+
+(keyed_element
+  . (literal_element (identifier) @field))
+(field_declaration name: (field_identifier) @field)
 
 (comment) @comment
 
 (ERROR) @error
+
+((interpreted_string_literal)
+	(#not-has-parent?
+		import_spec
+	)
+)

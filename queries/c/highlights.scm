@@ -122,7 +122,8 @@
  (type_descriptor)
 ] @type
 
-(storage_class_specifier) @storageclass
+; what is a storage class
+; (storage_class_specifier) @storageclass
 
 (type_qualifier) @type.qualifier
 
