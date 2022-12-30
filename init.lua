@@ -16,29 +16,18 @@ appendPaths {
 local ltreesitter = require 'ltreesitter'
 local core = require 'core'
 local common = require 'core.common'
+local command = require 'core.command'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
+
+local languages = require 'plugins.evergreen.languages'
+require 'plugins.evergreen.installer'
 
 local function localPath()
    local str = debug.getinfo(2, 'S').source:sub(2)
    return str:match '(.*[/\\])'
 end
 
-local function tru(tbl)
-	local t = {}
-
-	for _, k in ipairs(tbl) do
-		t[k] = true
-	end
-
-	return t
-end
-
-local validExts = tru {
-	'lua',
-	'go',
-	'zig'
-}
 local parsers = {}
 
 -- get parser based on ext
@@ -86,7 +75,7 @@ function Doc:new(filename, abs_filename, new_file)
 		local ext = filename:match '^.+(%..+)$'
 		if not ext then return end
 
-		if validExts[ext:sub(2)] then
+		if languages.exts[ext:sub(2)] then
 			self.ts = {parser = getParser(ext:sub(2))}
 		end
 
@@ -289,3 +278,13 @@ function Highlight:tokenize_line(idx, state)
 
 	return res
 end
+
+command.add('core.docview!', {
+	['evergreen:toggle-highlighting'] = function(dv)
+		-- check for doc.ts to not toggle on docviews that are in unsupported languages
+		if dv.doc.ts then
+			dv.doc.treesit = not dv.doc.treesit
+			dv.doc.highlighter:reset()
+		end
+	end
+})
