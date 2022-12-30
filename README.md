@@ -4,6 +4,9 @@
 Evergreen adds Treesitter syntax highlighting support for Lite XL.
 It is work in progress, but functions well.
 
+> **Warning**
+> Evergreen is only tested on Linux and will definitely not work on Windows.
+
 # Showcase
 
 | Without Evergreen                              | With Evergreen                                 |
@@ -39,21 +42,12 @@ git clone https://github.com/TorchedSammy/Evergreen.lxl
 ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
-# Setting Up Parsers
-Install supported treesitter parsers to `~/.local/share/tree-sitter/parsers`, example:
-```
-mkdir -p ~/.local/share/tree-sitter/parsers/
-cd ~/.local/share/tree-sitter/parsers
-git clone https://github.com/tree-sitter/tree-sitter-go
-cd tree-sitter-go
-make
-```
+# Usage
+To use Evergreen, you have to install the parser for your language of choice.
+This can be done with the `Evergreen: Install` command.  
 
-Some (or most) parsers may not have a Makefile. So instead of running make,
-you can run this command:  
-```
-gcc -o parser.so -shared src/*.c -Os -I./src -fPIC
-```
+Once there is a log that the install has completed, you can start coding
+with Treesitter highlighting! It's that easy.
 
 # License
 MIT
