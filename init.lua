@@ -21,6 +21,7 @@ local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
 
 local languages = require 'plugins.evergreen.languages'
+require 'plugins.evergreen.style'
 require 'plugins.evergreen.installer'
 
 local function localPath()
