@@ -38,6 +38,8 @@ command.add(nil, {
 					local out, exitCode = exec({'sh', '-c', 'gcc -o parser.so -shared src/*.c -Os -I./src -fPIC'}, {cwd = parserDir})
 					if exitCode ~= 0 then
 						core.error('An error occured while attempting to compile the parser\n' .. out)
+					else
+						core.log('Finished installing parser for ' .. lang)
 					end
 				end)
 			end,
