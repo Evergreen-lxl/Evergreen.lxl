@@ -1,14 +1,8 @@
 # Evergreen
 > 🌳 Treesitter support for Lite XL.
 
-Evergreen adds syntax highlighting to Lite XL via Treesitter. It is *very*
-work in progress. There are a few glaring bugs ([#1] of them :^)) and it is
-not as efficient as it can be.
-
-It will be the backbone for an easy Lite XL treesitter interface in the
-future.
-
-[#1]: https://github.com/TorchedSammy/Evergreen.lxl/issues/1
+Evergreen adds Treesitter syntax highlighting support for Lite XL.
+It is work in progress, but functions well.
 
 # Showcase
 
@@ -18,15 +12,23 @@ future.
 
 # Supported Languages
 - [x] [Go][tree-sitter-go]
-- [x] [Lua][tree-sitter-lua] (only the one from MunifTanjim works)
+- [x] [Lua][tree-sitter-lua]
 
 If you want more languages supported, open an issue.
 
 # Requirements
-- Lite XL master (upcoming 2.1 release)
+- Lite XL 2.1+
 - ltreesitter master via Luarocks (`luarocks install ltreesitter --local --dev`)
 
-# Setup
+# Install
+## Express Install
+Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
+adding this to your plugin declaration:
+```lua
+	{'TorchedSammy/Evergreen.lxl', run = 'luarocks install ltreesitter --local --dev'},
+```
+
+## Manually
 - Git clone Evergreen into Lite XL plugins directory
 Or symlink:  
 ```
@@ -35,6 +37,7 @@ git clone https://github.com/TorchedSammy/Evergreen.lxl
 ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
+# Setting Up Parsers
 Install supported treesitter parsers to `~/.local/share/tree-sitter/parsers`, example:
 ```
 mkdir -p ~/.local/share/tree-sitter/parsers/
@@ -49,9 +52,9 @@ you can run this command:
 ```
 gcc -o parser.so -shared src/*.c -Os -I./src -fPIC
 ```
+
 # License
 MIT
-
 
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
