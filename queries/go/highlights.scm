@@ -157,9 +157,3 @@
 (comment) @comment
 
 (ERROR) @error
-
-((interpreted_string_literal)
-	(#not-has-parent?
-		import_spec
-	)
-)
