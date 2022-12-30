@@ -59,31 +59,6 @@ local function getParser(ext)
 	return parser
 end
 
---[[
-for capture, capture_name in my_query:capture(tree:root()) do
-	print(capture:source(), capture_name)
-end
-
-local function nodes(t)
-	local treenode = t:root()
-	local directChild = true
-	local function yieldnode(node, nested)
-		for n in node:named_children() do
-			coroutine.yield(n, directChild)
-			if n:named_child_count() ~= 0 then
-				directChild = false
-				yieldnode(n, true)
-			end
-			if not nested then
-				directChild = true
-			end
-		end
-	end
-
-	return coroutine.wrap(function() yieldnode(treenode) end)
-end
-]]--
-
 local function highlightQuery(ext)
 	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ext))
 	if not ff then
