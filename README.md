@@ -13,6 +13,7 @@ It is work in progress, but functions well.
 # Supported Languages
 - [x] [Go][tree-sitter-go]
 - [x] [Lua][tree-sitter-lua]
+- [x] [Zig][tree-sitter-zig]
 
 If you want more languages supported, open an issue.
 
@@ -58,3 +59,4 @@ MIT
 
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
+[tree-sitter-zig]: https://github.com/maxxnino/tree-sitter-zig

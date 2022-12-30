@@ -36,7 +36,8 @@ end
 
 local validExts = tru {
 	'lua',
-	'go'
+	'go',
+	'zig'
 }
 local parsers = {}
 
