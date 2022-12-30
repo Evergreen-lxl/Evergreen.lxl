@@ -16,6 +16,7 @@ appendPaths {
 local ltreesitter = require 'ltreesitter'
 local core = require 'core'
 local common = require 'core.common'
+local command = require 'core.command'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
 
@@ -288,3 +289,13 @@ function Highlight:tokenize_line(idx, state)
 
 	return res
 end
+
+command.add('core.docview!', {
+	['evergreen:toggle-highlighting'] = function(dv)
+		-- check for doc.ts to not toggle on docviews that are in unsupported languages
+		if dv.doc.ts then
+			dv.doc.treesit = not dv.doc.treesit
+			dv.doc.highlighter:reset()
+		end
+	end
+})
