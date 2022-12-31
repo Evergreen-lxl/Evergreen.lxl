@@ -46,8 +46,59 @@ ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 To use Evergreen, you have to install the parser for your language of choice.
 This can be done with the `Evergreen: Install` command.  
 
-Once there is a log that the install has completed, you can start coding
-with Treesitter highlighting! It's that easy.
+The next thing to do is add style variables for the highlighting groups in
+your config. This can be done like:
+```lua
+local style = require 'core.style'
+
+style.syntax['<name>'] = '#ffffff'
+```
+
+There are a lot of highlight groups to have better control over what specific
+parts to highlight. This may be overwhelming for some people though, so
+some of these have aliases to the default Lite XL style variables,
+and groups like `keyword.return` will default to the `keyword` group,
+`conditional.ternary` will default to `conditional` if its set, etc.
+
+These are the available highlight groups:  
+- `attribute`
+- `boolean`: A group to highlight booleans specifically
+- `character`
+- `comment`
+- `conditional`: Keywords relating to conditionals (`if`/`else`)
+- `conditional.ternary`
+- `constant`
+- `constant.builtin`: Constants that are builtins to the language (Go's `iota`, `nil`)
+- `define`
+- `exception`: Keywords relating to exceptions (`try` and `catch`)
+- `field`: Like a field in a Lua table
+- `float`
+- `function`: Function declaration
+- `function.call`: Function call
+- `function.macro`
+- `include`: Keywords related to including modules/packages
+- `keyword.function`: The function operator in a language (like `func` in Go)
+- `keyword.operator`: Operators that are words (like `and`, `or` in Lua)
+- `keyword.return`: The `return` operator
+- `label`
+- `method`
+- `method.call`
+- `namespace`
+- `number`
+- `operator`
+- `parameter`: Parameters to a function (in declaration)
+- `preproc`: Preprocessor directives (`#if` in C)
+- `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
+- `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
+- `repeat`: Keywords relating to loops (`while`, `for`)
+- `string`
+- `string.escape`
+- `type`
+- `type.builtin`: Builtin types (`int`, `bool`)
+- `type.definition`
+- `type.qualifier`: Type qualifiers (`private`, `public`)
+- `variable`
+- `variable.builtin`: Builtin variables (`this`, `self`)
 
 # License
 MIT
