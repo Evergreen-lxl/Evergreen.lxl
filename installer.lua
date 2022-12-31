@@ -44,6 +44,13 @@ command.add(nil, {
 				end
 				core.log('Installing parser for ' .. lang)
 
+				do
+					local out, exitCode = exec {'tree-sitter', 'generate'}
+					if exitCode ~= 0 then
+						core.error('Could not generate parser. Parser install *may* still succeed. Do you have the tree-sitter CLI in your PATH?\nHere are some logs:\n'..out)
+					end
+				end
+
 				core.add_thread(function()
 					local parserDir = string.format('%s/%s', installDir, 'tree-sitter-' .. lang)
 					exec {'git', 'clone', languages.exts[lang], parserDir}
