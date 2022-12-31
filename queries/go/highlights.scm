@@ -140,7 +140,7 @@
 (interpreted_string_literal) @string
 (raw_string_literal) @string
 (rune_literal) @string
-(escape_sequence) @string.escape
+;; (escape_sequence) @string.escape
 
 (int_literal) @number
 (float_literal) @float

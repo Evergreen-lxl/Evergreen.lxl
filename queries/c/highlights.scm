@@ -103,7 +103,7 @@
 
 (string_literal) @string
 (system_lib_string) @string
-(escape_sequence) @string.escape
+;; (escape_sequence) @string.escape
 
 (null) @constant.builtin
 (number_literal) @number
