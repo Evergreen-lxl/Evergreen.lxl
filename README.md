@@ -20,7 +20,7 @@ It is work in progress, but functions well.
 - [x] [Go][tree-sitter-go]
 - [x] [go.mod][tree-sitter-go-mod]
 - [x] [Lua][tree-sitter-lua]
-- [x] [Rust][tree-stiter-rust]
+- [x] [Rust][tree-sitter-rust]
 
 If you want more languages supported, open an issue.
 
@@ -33,7 +33,7 @@ If you want more languages supported, open an issue.
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
-	{'TorchedSammy/Evergreen.lxl', run = 'luarocks install ltreesitter --local --dev'},
+{'TorchedSammy/Evergreen.lxl', run = 'luarocks install ltreesitter --local --dev'},
 ```
 
 ## Manually
