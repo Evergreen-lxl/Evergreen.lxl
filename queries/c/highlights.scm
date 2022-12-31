@@ -176,7 +176,7 @@
   declarator: (pointer_declarator
    declarator: (pointer_declarator
     declarator: (pointer_declarator
-     declarator: (identifier) @parameter)))
+     declarator: (identifier) @parameter))))
    
 (preproc_params (identifier) @parameter)
 
