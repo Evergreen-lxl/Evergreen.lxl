@@ -79,6 +79,6 @@ end
 
 core.add_thread(function()
 	if missingCount > 0 then
-		core.warn(string.format('Missing %d/%d style variables for Evergreen syntax highlighting. To get the full experience, you can set these separately.', missingCount, totalCount))
+		core.warn(string.format('Missing %d/%d style variables for Evergreen syntax highlighting. To get the full experience, you can set these separately:\n%s', missingCount, totalCount, table.concat(missingStyles, '\n')))
 	end
 end)
