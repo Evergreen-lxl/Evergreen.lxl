@@ -152,7 +152,6 @@ local function sortPositions(line1, col1, line2, col2)
 	return line1, col1, line2, col2
 end
 
--- TODO: appropriate this for delete
 local oldDocRemove = Doc.raw_remove
 function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 	if self.treesit then
@@ -180,6 +179,12 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
+end
+
+local oldDocReload = Doc.reload
+function Doc:reload()
+	oldDocReload(self)
+	self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines))
 end
 
 local oldTokenize = Highlight.tokenize_line
