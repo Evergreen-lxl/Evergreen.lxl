@@ -2,7 +2,12 @@ local core = require 'core'
 local command = require 'core.command'
 local languages = require 'plugins.evergreen.languages'
 local home = HOME or os.getenv 'HOME'
-local installDir = ('~/.local/share/tree-sitter/parsers'):gsub('~', home)
+local installDir
+if PLATFORM == 'Windows' then
+	installDir = string.format('%s\\treesitter\\parsers', os.getenv 'APPDATA')
+else
+	installDir = ('~/.local/share/tree-sitter/parsers'):gsub('~', home)
+end
 local exts = {}
 
 for k, _ in pairs(languages.exts) do
@@ -21,6 +26,14 @@ local function exec(cmd, opts)
 	return nil
 end
 
+local function compileParser(path)
+	if PLATFORM == 'Windows' then
+		return exec({'cmd', '/c', 'gcc -o parser.so -shared src\\*.c -Os -I.\\src -fPIC'}, {cwd = path})
+	else
+		return exec({'sh', '-c', 'gcc -o parser.so -shared src/*.c -Os -I./src -fPIC'}, {cwd = path})
+	end
+end
+
 command.add(nil, {
 	['evergreen:install'] = function()
 		core.command_view:enter('Install a Treesitter parser for', {
@@ -35,7 +48,7 @@ command.add(nil, {
 					local parserDir = string.format('%s/%s', installDir, 'tree-sitter-' .. lang)
 					exec {'git', 'clone', languages.exts[lang], parserDir}
 
-					local out, exitCode = exec({'sh', '-c', 'gcc -o parser.so -shared src/*.c -Os -I./src -fPIC'}, {cwd = parserDir})
+					local out, exitCode = compileParser(parserDir)
 					if exitCode ~= 0 then
 						core.error('An error occured while attempting to compile the parser\n' .. out)
 					else
