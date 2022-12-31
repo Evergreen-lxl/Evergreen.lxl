@@ -151,16 +151,8 @@
   name: (identifier) @function.macro)
 
 ;; Fields
-(initializer_pair
- designator: (field_designator
-  (field_identifier) @field))
+(field_identifier) @field
 
-(field_declaration
-  (field_identifier) @field)
-
-(field_expression
-  (field_identifier) @field)
-  
 (comment) @comment
 
 ;; Parameters
