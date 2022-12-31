@@ -60,6 +60,9 @@ some of these have aliases to the default Lite XL style variables,
 and groups like `keyword.return` will default to the `keyword` group,
 `conditional.ternary` will default to `conditional` if its set, etc.
 
+Evergreen will warn in the log if there are any groups missing, you can
+look at this to see what to set to highlight.
+
 These are the available highlight groups:  
 - `attribute`
 - `boolean`: A group to highlight booleans specifically
@@ -92,6 +95,8 @@ These are the available highlight groups:
 - `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
 - `repeat`: Keywords relating to loops (`while`, `for`)
 - `string`
+- `text.diff.add`: Highlights additions in diffs
+- `text.diff.delete`: Highlights deletions in diffs
 - `type`
 - `type.builtin`: Builtin types (`int`, `bool`)
 - `type.definition`

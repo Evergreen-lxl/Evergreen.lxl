@@ -1,12 +1,18 @@
 local core = require 'core'
 local style = require 'core.style'
+local missingStyles = {}
 local missingCount = 0
 local totalCount = 0
 
-local function addAlias(to, from)
+local function addAlias(to, from, notSyntax)
+	totalCount = totalCount + 1
 	if not style.syntax[to] then
 		missingCount = missingCount + 1
-		style.syntax[to] = style.syntax[from]
+		table.insert(missingStyles, to)
+
+		local source = style.syntax
+		if notSyntax then source = style end
+		style.syntax[to] = source[from]
 	end
 end
 
@@ -52,15 +58,17 @@ local altMap = {
 		'punctuation.delimiter',
 		'punctuation.brackets',
 		'variable'
-	}
+	},
 }
+
+addAlias('error', 'error', true)
+addAlias('text.diff.add', 'good', true)
+addAlias('text.diff.delete', 'error', true)
 
 for from, tos in pairs(altMap) do
 	for _, to in ipairs(tos) do
 		addAlias(to, from)
 	end
-
-	totalCount = totalCount + #tos
 end
 
 core.add_thread(function()

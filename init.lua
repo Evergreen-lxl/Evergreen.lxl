@@ -31,32 +31,18 @@ end
 
 local parsers = {}
 
-local function makeTbl(tbl)
-	local t = {}
-	for exts, ftype in pairs(tbl) do
-		for ext in exts:gmatch('[^,]+') do
-			t[ext] = ftype
-		end
-	end
-	return t
-end
-
 --- @param doc core.doc
 local function docToLang(doc)
 	-- TODO: hashbang detection
 	if not doc.filename then return end
 
-	local langs = makeTbl {
-		['c,h'] = 'c',
-		['cc,cpp,hpp'] = 'cpp',
-		['go'] = 'go',
-		['lua'] = 'lua'
-	}
-
 	local ext = doc.filename:match('%.([^.]+)$')
 	if ext then
-		return langs[ext]
+		local extMapping = languages.extensionMappings[ext]
+		if extMapping then return extMapping end
 	end
+
+	-- match explicitly on filename
 end
 
 -- get parser based on ext
