@@ -163,6 +163,21 @@
   declarator: (pointer_declarator
    declarator: (identifier) @parameter))
 
+;; this is so sad
+;; should be a temporary fix
+(parameter_declaration
+  declarator: (pointer_declarator
+   declarator: (pointer_declarator
+    declarator: (identifier) @parameter)))
+
+;; :sob:
+;; 3 at most for sanity
+(parameter_declaration
+  declarator: (pointer_declarator
+   declarator: (pointer_declarator
+    declarator: (pointer_declarator
+     declarator: (identifier) @parameter)))
+   
 (preproc_params (identifier) @parameter)
 
 [
