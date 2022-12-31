@@ -36,18 +36,17 @@ local parsers = {}
 local function getParser(ext)
 	if parsers[ext] then return parsers[ext] end
 
-	local ok, parser = pcall(ltreesitter.require, ext)
+	local ok, result = pcall(ltreesitter.require, ext)
 
 	if not ok then
-		core.log(string.format('Could not load parser for %s', ext))
-		print(ok, parser)
+		core.error(string.format('Could not load parser for %s\n%s', ext, result))
 		return nil
 	else
 		core.log(string.format('Loaded parser for %s', ext))
-		parsers[ext] = parser
+		parsers[ext] = result
 	end
 
-	return parser
+	return result
 end
 
 local function highlightQuery(ext)
