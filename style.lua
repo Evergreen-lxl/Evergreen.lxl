@@ -10,17 +10,21 @@ addAlias('boolean', 'literal')
 
 addAlias('constant', 'literal')
 addAlias('constant.builtin', 'literal')
-
 addAlias('conditional', 'keyword')
 addAlias('conditional.ternary', 'operator')
 
 addAlias('define', 'keyword')
-addAlias('exception', 'keyword')
-addAlias('field', 'normal')
 
+addAlias('exception', 'keyword')
+
+addAlias('field', 'normal')
+addAlias('function.call', 'function')
 addAlias('float', 'literal')
+
 addAlias('number', 'literal')
 
-addAlias('function.call', 'function')
+addAlias('keyword.function', 'keyword')
+addAlias('keyword.operator', 'operator')
+
 addAlias('method', 'function')
 addAlias('method.call', 'method') -- if user doesnt have custom method highlight it will fallback to function
