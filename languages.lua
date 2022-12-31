@@ -22,6 +22,10 @@ M.extensionMappings = makeTbl {
 	'lua',
 }
 
+M.filenameMappings = {
+	['go.mod'] = 'gomod'
+}
+
 -- lists of valid/supported language extensions
 -- with their intended parser
 M.exts = {
@@ -29,7 +33,8 @@ M.exts = {
 	cpp = 'https://github.com/tree-sitter/tree-sitter-cpp',
 	diff = 'https://github.com/the-mikedavis/tree-sitter-diff',
 	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
-	go = 'https://github.com/tree-sitter/tree-sitter-go'
+	go = 'https://github.com/tree-sitter/tree-sitter-go',
+	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
 }
 
 M.installed = {}

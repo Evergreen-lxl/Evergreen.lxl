@@ -43,6 +43,7 @@ local function docToLang(doc)
 	end
 
 	-- match explicitly on filename
+	return languages.filenameMappings[doc.filename]
 end
 
 -- get parser based on ext
