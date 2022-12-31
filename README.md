@@ -11,7 +11,7 @@ It is work in progress, but functions well.
 
 | Without Evergreen                              | With Evergreen                                 |
 | ---------------------------------------------- | ---------------------------------------------- |
-| ![](https://safe.kashima.moe/6b3frqkk0q93.png) | ![](https://safe.kashima.moe/97eefjivjyza.png) |
+| ![](https://safe.kashima.moe/lye07t6hf52h.png) | ![](https://safe.kashima.moe/j1j4a7vbgyqh.png) |
 
 # Supported Languages
 - [x] [C][tree-sitter-c]
