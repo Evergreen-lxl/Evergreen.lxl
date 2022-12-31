@@ -92,7 +92,6 @@ These are the available highlight groups:
 - `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
 - `repeat`: Keywords relating to loops (`while`, `for`)
 - `string`
-- `string.escape`
 - `type`
 - `type.builtin`: Builtin types (`int`, `bool`)
 - `type.definition`
