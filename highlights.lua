@@ -28,7 +28,7 @@ function M.init(doc)
 	if p then
 		doc.treesit = true
 		doc.ts = {
-			parser = parser,
+			parser = p,
 			tree = p:parse_with(parser.input(doc.lines)),
 			query = p:query(M.query(languages.fromDoc(doc))),
 			mlNodes = {}
