@@ -13,91 +13,24 @@ appendPaths {
 	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser.so'
 }
 
-local ltreesitter = require 'ltreesitter'
-local core = require 'core'
 local common = require 'core.common'
 local command = require 'core.command'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
 
-local languages = require 'plugins.evergreen.languages'
+local parser = require 'plugins.evergreen.parser'
+local highlights = require 'plugins.evergreen.highlights'
 require 'plugins.evergreen.style'
 require 'plugins.evergreen.installer'
 
-local function localPath()
-   local str = debug.getinfo(2, 'S').source:sub(2)
-   return str:match '(.*[/\\])'
-end
-
-local parsers = {}
-
---- @param doc core.doc
-local function docToLang(doc)
-	-- TODO: hashbang detection
-	if not doc.filename then return end
-
-	local ext = doc.filename:match('%.([^.]+)$')
-	if ext then
-		local extMapping = languages.extensionMappings[ext]
-		if extMapping then return extMapping end
-	end
-
-	-- match explicitly on filename
-	return languages.filenameMappings[doc.filename]
-end
-
--- get parser based on ext
-local function getParser(ftype)
-	if not ftype then return end
-	if parsers[ftype] then return parsers[ftype] end
-
-	local ok, result = pcall(ltreesitter.require, ftype)
-
-	if not ok then
-		core.error(string.format('Could not load parser for %s\n%s', ftype, result))
-		return nil
-	else
-		core.log(string.format('Loaded parser for %s', ftype))
-		parsers[ftype] = result
-	end
-
-	return result
-end
-
-local function highlightQuery(ext)
-	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ext))
-	if not ff then
-		return ""
-	end
-
-	local highlights = ff:read '*a'
-	ff:close()
-
-	return highlights
-end
-
-local function tsInput(lines)
-	return function(_, point)
-		return (point.row < #lines)
-			and (lines[point.row + 1]:sub(point.column + 1)) or nil
-	end
-end
+--- @class core.doc
+--- @field treesit boolean
+--- @field ts table
 
 local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
-	if filename then
-		local parser = getParser(docToLang(self))
-		if parser then
-			self.treesit = true
-			self.ts = {
-				parser = parser,
-				tree = parser:parse_with(tsInput(self.lines)),
-				query = parser:query(highlightQuery(docToLang(self))),
-				mlNodes = {}
-			}
-		end
-	end
+	highlights.init(self)
 end
 
 function table.slice(tbl, first, last, step)
@@ -122,7 +55,7 @@ end
 
 local function incrementalHighlight(doc)
 	local old = doc.ts.tree
-	doc.ts.tree = doc.ts.parser:parse_with(tsInput(doc.lines), doc.ts.tree)
+	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
 
 	for _, p in ipairs(old:get_changed_ranges(doc.ts.tree)) do
 		for i = p.start_point.row + 1, p.end_point.row + 1 do
@@ -196,7 +129,7 @@ end
 local oldDocReload = Doc.reload
 function Doc:reload()
 	oldDocReload(self)
-	self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines))
+	self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
 end
 
 local oldTokenize = Highlight.tokenize_line
