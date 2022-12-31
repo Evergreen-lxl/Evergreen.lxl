@@ -1,6 +1,9 @@
 local core = require 'core'
 local command = require 'core.command'
+local DocView = require 'core.docview'
 local languages = require 'plugins.evergreen.languages'
+local highlights = require 'plugins.evergreen.highlights'
+
 local home = HOME or os.getenv 'HOME'
 local installDir = ('~/.local/share/tree-sitter/parsers'):gsub('~', home)
 local exts = {}
@@ -23,6 +26,8 @@ end
 
 command.add(nil, {
 	['evergreen:install'] = function()
+		local av = core.active_view
+
 		core.command_view:enter('Install a Treesitter parser for', {
 			submit = function(lang)
 				if not languages.exts[lang] then
@@ -47,6 +52,11 @@ command.add(nil, {
 						core.error('An error occured while attempting to compile the parser\n' .. out)
 					else
 						core.log('Finished installing parser for ' .. lang)
+
+						if getmetatable(av) == DocView and languages.fromDoc(av.doc) == lang then
+							highlights.init(av.doc)
+							av.doc.highlighter:reset()
+						end
 					end
 				end)
 			end,
