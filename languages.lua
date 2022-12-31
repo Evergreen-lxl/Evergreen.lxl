@@ -20,6 +20,7 @@ M.extensionMappings = makeTbl {
 	'diff',
 	'go',
 	'lua',
+	['rs'] = 'rust',
 }
 
 M.filenameMappings = {
@@ -35,6 +36,7 @@ M.exts = {
 	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
 	go = 'https://github.com/tree-sitter/tree-sitter-go',
 	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
+	rust = 'https://github.com/tree-sitter/tree-sitter-rust'
 }
 
 M.installed = {}

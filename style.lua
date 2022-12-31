@@ -46,17 +46,23 @@ local altMap = {
 	},
 	operator = {
 		'conditional.ternary',
-		'keyword.operator'
+		'keyword.operator',
+		'punctuation.special',
+		'storageclass'
+	},
+	storageclass = {
+		'storageclass.lifetime'
 	},
 	['function'] = {
 		'function.call',
+		'function.macro',
 		'method',
 	},
 	method = {'method.call'},
 	normal = {
 		'field',
-		'punctuation.delimiter',
 		'punctuation.brackets',
+		'punctuation.delimiter',
 		'variable'
 	},
 }

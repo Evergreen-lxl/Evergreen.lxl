@@ -93,7 +93,10 @@ These are the available highlight groups:
 - `preproc`: Preprocessor directives (`#if` in C)
 - `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
 - `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
+- `punctuation.special`: `#` in rust, treated as an operator by default
 - `repeat`: Keywords relating to loops (`while`, `for`)
+- `storageclass`: `static`, `const` in C
+- `storageclass.lifetime`: Specifically for lifetimes in Rust currently
 - `string`
 - `text.diff.add`: Highlights additions in diffs
 - `text.diff.delete`: Highlights deletions in diffs
