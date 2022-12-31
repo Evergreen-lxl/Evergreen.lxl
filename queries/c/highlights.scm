@@ -140,7 +140,7 @@
 ;; Preproc def / undef
 (preproc_def
   name: (_) @constant)
-
+ 
 (call_expression
   function: (identifier) @function.call)
 (call_expression
@@ -151,6 +151,9 @@
 (preproc_function_def
   name: (identifier) @function.macro)
 
+(field_expression
+  (field_identifier) @field)
+  
 (comment) @comment
 
 ;; Parameters
