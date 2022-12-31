@@ -31,19 +31,47 @@ end
 
 local parsers = {}
 
--- get parser based on ext
--- todo: pass doc and make it get based on either ext or actual file type
-local function getParser(ext)
-	if parsers[ext] then return parsers[ext] end
+local function makeTbl(tbl)
+	local t = {}
+	for exts, ftype in pairs(tbl) do
+		for ext in exts:gmatch('[^,]+') do
+			t[ext] = ftype
+		end
+	end
+	return t
+end
 
-	local ok, result = pcall(ltreesitter.require, ext)
+--- @param doc core.doc
+local function docToLang(doc)
+	-- TODO: hashbang detection
+	if not doc.filename then return end
+
+	local langs = makeTbl {
+		['c,h'] = 'c',
+		['cc,cpp,hpp'] = 'cpp',
+		['go'] = 'go',
+		['lua'] = 'lua'
+	}
+
+	local ext = doc.filename:match('%.([^.]+)$')
+	if ext then
+		return langs[ext]
+	end
+end
+
+-- get parser based on ext
+local function getParser(ftype)
+	if not ftype then return end
+	if parsers[ftype] then return parsers[ftype] end
+
+	local ok, result = pcall(ltreesitter.require, ftype)
 
 	if not ok then
-		core.error(string.format('Could not load parser for %s\n%s', ext, result))
+		core.error(string.format('Could not load parser for %s\n%s', ftype, result))
 		return nil
 	else
-		core.log(string.format('Loaded parser for %s', ext))
-		parsers[ext] = result
+		core.log(string.format('Loaded parser for %s', ftype))
+		parsers[ftype] = result
 	end
 
 	return result
@@ -72,18 +100,15 @@ local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
 	if filename then
-		local ext = filename:match '^.+(%..+)$'
-		if not ext then return end
-
-		if languages.exts[ext:sub(2)] then
-			self.ts = {parser = getParser(ext:sub(2))}
-		end
-
-		if self.ts and self.ts.parser then
+		local parser = getParser(docToLang(self))
+		if parser then
 			self.treesit = true
-			self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines))
-			self.ts.query = self.ts.parser:query(highlightQuery(ext:sub(2)))
-			self.ts.mlNodes = {}
+			self.ts = {
+				parser = parser,
+				tree = parser:parse_with(tsInput(self.lines)),
+				query = parser:query(highlightQuery(docToLang(self))),
+				mlNodes = {}
+			}
 		end
 	end
 end
