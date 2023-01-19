@@ -30,7 +30,15 @@ function M.init(doc)
 		doc.ts = {
 			parser = p,
 			tree = p:parse_with(parser.input(doc.lines)),
-			query = p:query(M.query(languages.fromDoc(doc))),
+			query = p:query(M.query(languages.fromDoc(doc))):with {
+				['any-of?'] = function(t, ...)
+					local src = t:source()
+					for _, match in ipairs {...} do
+						if src == match then return true end
+					end
+					return false
+				end
+			},
 			mlNodes = {}
 		}
 	end
