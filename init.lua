@@ -129,7 +129,9 @@ end
 local oldDocReload = Doc.reload
 function Doc:reload()
 	oldDocReload(self)
-	self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
+	if self.treesit then
+		self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
+	end
 end
 
 local oldTokenize = Highlight.tokenize_line
