@@ -1,6 +1,7 @@
 local core = require 'core'
 local command = require 'core.command'
 local DocView = require 'core.docview'
+local util = require 'plugins.evergreen.util'
 local config = require 'plugins.evergreen.config'
 local languages = require 'plugins.evergreen.languages'
 local highlights = require 'plugins.evergreen.highlights'
@@ -23,11 +24,47 @@ local function exec(cmd, opts)
 	return nil
 end
 
-local function compileParser(path)
-	if PLATFORM == 'Windows' then
-		return exec({'cmd', '/c', 'gcc -o parser.so -shared src\\*.c -Os -I.\\src -fPIC'}, {cwd = path})
+local function compileParser(av, lang)
+	local parserDir = util.join {config.parserLocation, lang}
+	exec {'git', 'clone', languages.exts[lang], parserDir}
+
+	do
+		local out, exitCode = exec({'tree-sitter', 'generate'}, {cwd = parserDir})
+		if exitCode ~= 0 then
+			core.error('Could not generate parser. Parser install *may* still succeed. Do you have the tree-sitter CLI in your PATH?\nHere are some logs:\n'..out)
+		end
+	end
+
+	do
+		local out, exitCode = exec(PLATFORM == 'Windows' and
+		{'cmd', '/c', 'gcc -o parser.so -shared src\\*.c -Os -I.\\src -fPIC'} or
+		{'sh', '-c', 'gcc -o parser.so -shared src/*.c -Os -I./src -fPIC'}, {cwd = parserDir})
+
+		if exitCode ~= 0 then
+			core.error('An error occured while attempting to compile the parser\n' .. out)
+		else
+			core.log('Finished installing parser for ' .. lang)
+			if getmetatable(av) == DocView and languages.fromDoc(av.doc) == lang then
+				highlights.init(av.doc)
+				av.doc.highlighter:reset()
+			end
+		end
+	end
+end
+
+local function downloadParser(av, lang)
+	local url = string.format('https://nightly.link/TorchedSammy/evergreen-builds/workflows/parsers/master/tree-sitter-%s-%s-x86_64.zip', lang, string.lower(PLATFORM))
+	local parserDir = util.join {config.parserLocation, lang}
+
+	local out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', parserDir, url)})
+	if exitCode ~= 0 then
+		core.error('An error occured while attempting to install the parser\n' .. out)
 	else
-		return exec({'sh', '-c', 'gcc -o parser.so -shared src/*.c -Os -I./src -fPIC'}, {cwd = path})
+		core.log('Finished installing parser for ' .. lang)
+		if getmetatable(av) == DocView and languages.fromDoc(av.doc) == lang then
+			highlights.init(av.doc)
+			av.doc.highlighter:reset()
+		end
 	end
 end
 
@@ -44,27 +81,10 @@ command.add(nil, {
 				core.log('Installing parser for ' .. lang)
 
 				core.add_thread(function()
-					local parserDir = string.format('%s/%s', config.parserLocation, 'tree-sitter-' .. lang)
-					exec {'git', 'clone', languages.exts[lang], parserDir}
-
-					local out, exitCode = compileParser(parserDir)
-					do
-						local out, exitCode = exec({'tree-sitter', 'generate'}, {cwd = parserDir})
-						if exitCode ~= 0 then
-							core.error('Could not generate parser. Parser install *may* still succeed. Do you have the tree-sitter CLI in your PATH?\nHere are some logs:\n'..out)
-						end
-					end
-
-					local out, exitCode = exec({'sh', '-c', 'gcc -o parser.so -shared src/*.c -Os -I./src -fPIC'}, {cwd = parserDir})
-					if exitCode ~= 0 then
-						core.error('An error occured while attempting to compile the parser\n' .. out)
+					if PLATFORM == 'Windows' then
+						downloadParser(av, lang)
 					else
-						core.log('Finished installing parser for ' .. lang)
-
-						if getmetatable(av) == DocView and languages.fromDoc(av.doc) == lang then
-							highlights.init(av.doc)
-							av.doc.highlighter:reset()
-						end
+						compileParser(av, lang)
 					end
 				end)
 			end,
