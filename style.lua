@@ -1,30 +1,84 @@
+local core = require 'core'
 local style = require 'core.style'
+local missingStyles = {}
+local missingCount = 0
+local totalCount = 0
 
-local function addAlias(to, from)
+local function addAlias(to, from, notSyntax)
+	totalCount = totalCount + 1
 	if not style.syntax[to] then
-		style.syntax[to] = style.syntax[from]
+		missingCount = missingCount + 1
+		table.insert(missingStyles, to)
+
+		local source = style.syntax
+		if notSyntax then source = style end
+		style.syntax[to] = source[from]
 	end
 end
 
-addAlias('boolean', 'literal')
+local altMap = {
+	literal = {
+		'boolean',
+		'constant',
+		'float',
+		'number',
+		'label'
+	},
+	constant = {'constant.builtin'},
+	keyword = {
+		'attribute',
+		'conditional',
+		'define',
+		'exception',
+		'include',
+		'keyword.function',
+		'keyword.return',
+		'namespace',
+		'preproc',
+		'repeat',
+		'type.qualifier'
+	},
+	keyword2 = {
+		'type', -- this is suitable i think?
+		'type.builtin',
+		'variable.builtin',
+		'type.definition',
+	},
+	operator = {
+		'conditional.ternary',
+		'keyword.operator',
+		'punctuation.special',
+		'storageclass'
+	},
+	storageclass = {
+		'storageclass.lifetime'
+	},
+	['function'] = {
+		'function.call',
+		'function.macro',
+		'method',
+	},
+	method = {'method.call'},
+	normal = {
+		'field',
+		'punctuation.brackets',
+		'punctuation.delimiter',
+		'variable'
+	},
+}
 
-addAlias('constant', 'literal')
-addAlias('constant.builtin', 'literal')
-addAlias('conditional', 'keyword')
-addAlias('conditional.ternary', 'operator')
+addAlias('error', 'error', true)
+addAlias('text.diff.add', 'good', true)
+addAlias('text.diff.delete', 'error', true)
 
-addAlias('define', 'keyword')
+for from, tos in pairs(altMap) do
+	for _, to in ipairs(tos) do
+		addAlias(to, from)
+	end
+end
 
-addAlias('exception', 'keyword')
-
-addAlias('field', 'normal')
-addAlias('function.call', 'function')
-addAlias('float', 'literal')
-
-addAlias('number', 'literal')
-
-addAlias('keyword.function', 'keyword')
-addAlias('keyword.operator', 'operator')
-
-addAlias('method', 'function')
-addAlias('method.call', 'method') -- if user doesnt have custom method highlight it will fallback to function
+core.add_thread(function()
+	if missingCount > 0 then
+		core.warn(string.format('Missing %d/%d style variables for Evergreen syntax highlighting. To get the full experience, you can set these separately:\n%s', missingCount, totalCount, table.concat(missingStyles, '\n')))
+	end
+end)

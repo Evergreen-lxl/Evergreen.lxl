@@ -122,8 +122,7 @@
  (type_descriptor)
 ] @type
 
-; what is a storage class
-; (storage_class_specifier) @storageclass
+(storage_class_specifier) @storageclass
 
 (type_qualifier) @type.qualifier
 
@@ -140,7 +139,7 @@
 ;; Preproc def / undef
 (preproc_def
   name: (_) @constant)
-
+ 
 (call_expression
   function: (identifier) @function.call)
 (call_expression
@@ -151,6 +150,9 @@
 (preproc_function_def
   name: (identifier) @function.macro)
 
+;; Fields
+(field_identifier) @field
+
 (comment) @comment
 
 ;; Parameters
@@ -158,8 +160,24 @@
   declarator: (identifier) @parameter)
 
 (parameter_declaration
-  declarator: (pointer_declarator) @parameter)
+  declarator: (pointer_declarator
+   declarator: (identifier) @parameter))
 
+;; this is so sad
+;; should be a temporary fix
+(parameter_declaration
+  declarator: (pointer_declarator
+   declarator: (pointer_declarator
+    declarator: (identifier) @parameter)))
+
+;; :sob:
+;; 3 at most for sanity
+(parameter_declaration
+  declarator: (pointer_declarator
+   declarator: (pointer_declarator
+    declarator: (pointer_declarator
+     declarator: (identifier) @parameter))))
+   
 (preproc_params (identifier) @parameter)
 
 [

@@ -11,13 +11,16 @@ It is work in progress, but functions well.
 
 | Without Evergreen                              | With Evergreen                                 |
 | ---------------------------------------------- | ---------------------------------------------- |
-| ![](https://safe.kashima.moe/6b3frqkk0q93.png) | ![](https://safe.kashima.moe/97eefjivjyza.png) |
+| ![](https://safe.kashima.moe/lye07t6hf52h.png) | ![](https://safe.kashima.moe/j1j4a7vbgyqh.png) |
 
 # Supported Languages
 - [x] [C][tree-sitter-c]
 - [x] [C++][tree-sitter-cpp]
+- [x] [Diff][tree-sitter-diff]
 - [x] [Go][tree-sitter-go]
+- [x] [go.mod][tree-sitter-go-mod]
 - [x] [Lua][tree-sitter-lua]
+- [x] [Rust][tree-sitter-rust]
 
 If you want more languages supported, open an issue.
 
@@ -30,7 +33,7 @@ If you want more languages supported, open an issue.
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
-	{'TorchedSammy/Evergreen.lxl', run = 'luarocks install ltreesitter --local --dev'},
+{'TorchedSammy/Evergreen.lxl', run = 'luarocks install ltreesitter --local --dev'},
 ```
 
 ## Manually
@@ -59,6 +62,9 @@ parts to highlight. This may be overwhelming for some people though, so
 some of these have aliases to the default Lite XL style variables,
 and groups like `keyword.return` will default to the `keyword` group,
 `conditional.ternary` will default to `conditional` if its set, etc.
+
+Evergreen will warn in the log if there are any groups missing, you can
+look at this to see what to set to highlight.
 
 These are the available highlight groups:  
 - `attribute`
@@ -90,9 +96,13 @@ These are the available highlight groups:
 - `preproc`: Preprocessor directives (`#if` in C)
 - `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
 - `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
+- `punctuation.special`: `#` in rust, treated as an operator by default
 - `repeat`: Keywords relating to loops (`while`, `for`)
+- `storageclass`: `static`, `const` in C
+- `storageclass.lifetime`: Specifically for lifetimes in Rust currently
 - `string`
-- `string.escape`
+- `text.diff.add`: Highlights additions in diffs
+- `text.diff.delete`: Highlights deletions in diffs
 - `type`
 - `type.builtin`: Builtin types (`int`, `bool`)
 - `type.definition`
@@ -105,5 +115,8 @@ MIT
 
 [tree-sitter-c]: https://github.com/tree-sitter/tree-sitter-c
 [tree-sitter-cpp]: https://github.com/tree-sitter/tree-sitter-cpp
+[tree-sitter-diff]: https://github.com/the-mikedavis/tree-sitter-diff
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
+[tree-sitter-go-mod]: https://github.com/camdencheek/tree-sitter-go-mod
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
+[tree-sitter-rust]: https://github.com/tree-sitter/tree-sitter-rust
