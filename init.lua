@@ -1,5 +1,6 @@
 -- mod-version:3
 local home = HOME or os.getenv 'HOME'
+local soname = PLATFORM == 'Windows' and '.dll' or '.so'
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
 		package.cpath = package.cpath .. ';' .. path:gsub('~', home)
@@ -7,10 +8,10 @@ local function appendPaths(paths)
 end
 
 appendPaths {
-	'~/.luarocks/lib/lua/5.4/?.so',
-	'~/.luarocks/lib64/lua/5.4/?.so',
-	'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?.so',
-	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser.so'
+	'~/.luarocks/lib/lua/5.4/?' .. soname,
+	'~/.luarocks/lib64/lua/5.4/?' .. soname,
+	'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. soname,
+	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. soname
 }
 
 local common = require 'core.common'
