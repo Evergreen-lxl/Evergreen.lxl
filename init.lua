@@ -1,5 +1,6 @@
 -- mod-version:3
 local config = require 'plugins.evergreen.config'
+local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
 local soname = PLATFORM == 'Windows' and '.dll' or '.so'
 local function appendPaths(paths)
@@ -8,22 +9,13 @@ local function appendPaths(paths)
 	end
 end
 
-local function join(parts)
-	local str = ''
-	local sepPattern = string.format('%s$', '%' .. PATHSEP)
-	for i, part in ipairs(parts) do
-		local sepMatch = part:match(sepPattern)
-		str = str .. part .. (sepMatch or i == #parts and '' or PATHSEP)
-	end
-	str = str:gsub(string.format('%s$', '%' .. PATHSEP), '')
-
-	return str
-end
+system.mkdir(config.dataDir)
+system.mkdir(config.parserLocation)
 
 appendPaths {
-	join {config.parserLocation, '?' .. soname},
-	join {config.parserLocation, 'parsers', '?', 'libtree-sitter-?' .. soname},
-	join {config.parserLocation, 'parsers', '?', 'parser' .. soname},
+	util.join {config.dataDir, '?' .. soname},
+	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. soname},
+	util.join {config.parserLocation, '?', 'parser' .. soname},
 }
 
 if PLATFORM ~= 'Windows' then

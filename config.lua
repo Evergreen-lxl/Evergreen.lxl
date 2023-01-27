@@ -1,9 +1,12 @@
+local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
 
 local M = {
-	parserLocation = PLATFORM ~= 'Windows'
-	and ('~/.local/share/evergreen/parsers'):gsub('~', home)
-	or string.format('%s\\evergreen\\parsers', os.getenv 'APPDATA')
+	dataDir = PLATFORM ~= 'Windows'
+	and ('~/.local/share/evergreen'):gsub('~', home)
+	or string.format('%s\\evergreen', os.getenv 'APPDATA')
 }
+
+M.parserLocation = util.join {M.dataDir, 'parsers'}
 
 return M
