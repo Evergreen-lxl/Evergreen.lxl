@@ -21,6 +21,7 @@ M.extensionMappings = makeTbl {
 	'go',
 	'lua',
 	['rs'] = 'rust',
+	'zig'
 }
 
 M.filenameMappings = {
