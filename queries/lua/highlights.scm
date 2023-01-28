@@ -128,6 +128,11 @@
 
 (identifier) @variable
 
+(variable_list
+   attribute: (attribute
+     (["<" ">"] @punctuation.bracket
+      (identifier) @attribute)))
+
 ;; Constants
 
 (vararg_expression) @constant
@@ -155,22 +160,23 @@
 
 (parameters (identifier) @parameter)
 
-(function_call name: (identifier) @function)
+(function_call name: (identifier) @function.call)
 (function_declaration name: (identifier) @function)
 
-(function_call name: (dot_index_expression field: (identifier) @function))
+(function_call name: (dot_index_expression field: (identifier) @function.call))
 (function_declaration name: (dot_index_expression field: (identifier) @function))
 
-(method_index_expression method: (identifier) @method)
+(method_index_expression method: (identifier) @method.call)
 
 ;; Others
 
 (comment) @comment
 
-(hash_bang_line) @comment
+(hash_bang_line) @preproc
 
 (number) @number
 
 (string) @string
 
+;; Error
 (ERROR) @error

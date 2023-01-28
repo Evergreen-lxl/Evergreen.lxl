@@ -1,5 +1,6 @@
 -- mod-version:3
 local home = HOME or os.getenv 'HOME'
+local soname = PLATFORM == 'Windows' and '.dll' or '.so'
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
 		package.cpath = package.cpath .. ';' .. path:gsub('~', home)
@@ -7,85 +8,30 @@ local function appendPaths(paths)
 end
 
 appendPaths {
-	'~/.luarocks/lib/lua/5.4/?.so',
-	'~/.luarocks/lib64/lua/5.4/?.so',
-	'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?.so',
-	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser.so'
+	'~/.luarocks/lib/lua/5.4/?' .. soname,
+	'~/.luarocks/lib64/lua/5.4/?' .. soname,
+	'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. soname,
+	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. soname
 }
 
-local ltreesitter = require 'ltreesitter'
-local core = require 'core'
 local common = require 'core.common'
 local command = require 'core.command'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
 
-local languages = require 'plugins.evergreen.languages'
+local parser = require 'plugins.evergreen.parser'
+local highlights = require 'plugins.evergreen.highlights'
+require 'plugins.evergreen.style'
 require 'plugins.evergreen.installer'
 
-local function localPath()
-   local str = debug.getinfo(2, 'S').source:sub(2)
-   return str:match '(.*[/\\])'
-end
-
-local parsers = {}
-
--- get parser based on ext
--- todo: pass doc and make it get based on either ext or actual file type
-local function getParser(ext)
-	if parsers[ext] then return parsers[ext] end
-
-	local ok, parser = pcall(ltreesitter.require, ext)
-
-	if not ok then
-		core.log(string.format('Could not load parser for %s', ext))
-		print(ok, parser)
-		return nil
-	else
-		core.log(string.format('Loaded parser for %s', ext))
-		parsers[ext] = parser
-	end
-
-	return parser
-end
-
-local function highlightQuery(ext)
-	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ext))
-	if not ff then
-		return ""
-	end
-
-	local highlights = ff:read '*a'
-	ff:close()
-
-	return highlights
-end
-
-local function tsInput(lines)
-	return function(_, point)
-		return (point.row < #lines)
-			and (lines[point.row + 1]:sub(point.column + 1)) or nil
-	end
-end
+--- @class core.doc
+--- @field treesit boolean
+--- @field ts table
 
 local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
-	if filename then
-		local ext = filename:match '^.+(%..+)$'
-		if not ext then return end
-
-		if languages.exts[ext:sub(2)] then
-			self.ts = {parser = getParser(ext:sub(2))}
-		end
-
-		if self.ts and self.ts.parser then
-			self.treesit = true
-			self.ts.tree = self.ts.parser:parse_with(tsInput(self.lines))
-			self.ts.query = self.ts.parser:query(highlightQuery(ext:sub(2)))
-			self.ts.mlNodes = {}
-		end
-	end
+	highlights.init(self)
 end
 
 function table.slice(tbl, first, last, step)
@@ -110,7 +56,7 @@ end
 
 local function incrementalHighlight(doc)
 	local old = doc.ts.tree
-	doc.ts.tree = doc.ts.parser:parse_with(tsInput(doc.lines), doc.ts.tree)
+	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
 
 	for _, p in ipairs(old:get_changed_ranges(doc.ts.tree)) do
 		for i = p.start_point.row + 1, p.end_point.row + 1 do
@@ -152,7 +98,6 @@ local function sortPositions(line1, col1, line2, col2)
 	return line1, col1, line2, col2
 end
 
--- TODO: appropriate this for delete
 local oldDocRemove = Doc.raw_remove
 function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 	if self.treesit then
@@ -179,6 +124,14 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 		incrementalHighlight(self)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
+	end
+end
+
+local oldDocReload = Doc.reload
+function Doc:reload()
+	oldDocReload(self)
+	if self.treesit then
+		self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
 	end
 end
 
