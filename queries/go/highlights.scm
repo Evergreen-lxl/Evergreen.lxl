@@ -1,5 +1,4 @@
-;; copied from nvim-treesitter; we're gonna have our own by the time this
-;; plugin ever gets off the ground
+;; stolen from nvim-treesitter
 ;; Forked from tree-sitter-go
 ;; Copyright (c) 2014 Max Brunsfeld (The MIT License)
 
@@ -16,6 +15,9 @@
 (variadic_parameter_declaration (identifier) @parameter)
 
 (label_name) @label
+
+((identifier) @constant
+ (#eq? @constant "_"))
 
 (const_spec
   name: (identifier) @constant)
@@ -119,6 +121,55 @@
   "switch"
   "if"
  ] @conditional
+
+
+;; Builtin types
+
+((type_identifier) @type.builtin
+ (#any-of? @type.builtin
+           "any"
+           "bool"
+           "byte"
+           "complex128"
+           "complex64"
+           "error"
+           "float32"
+           "float64"
+           "int"
+           "int16"
+           "int32"
+           "int64"
+           "int8"
+           "rune"
+           "string"
+           "uint"
+           "uint16"
+           "uint32"
+           "uint64"
+           "uint8"
+           "uintptr"))
+
+
+;; Builtin functions
+
+((identifier) @function.builtin
+ (#any-of? @function.builtin
+           "append"
+           "cap"
+           "close"
+           "complex"
+           "copy"
+           "delete"
+           "imag"
+           "len"
+           "make"
+           "new"
+           "panic"
+           "print"
+           "println"
+           "real"
+           "recover"))
+
 
 ; Delimiters
 
