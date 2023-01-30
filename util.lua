@@ -1,4 +1,6 @@
-local M = {}
+local M = {
+	soname = PLATFORM == 'Windows' and '.dll' or '.so'
+}
 
 function M.join(parts)
 	local str = ''
@@ -11,6 +13,5 @@ function M.join(parts)
 
 	return str
 end
-
 
 return M

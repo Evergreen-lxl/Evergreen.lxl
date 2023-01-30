@@ -2,7 +2,6 @@
 local config = require 'plugins.evergreen.config'
 local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
-local soname = PLATFORM == 'Windows' and '.dll' or '.so'
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
 		package.cpath = package.cpath .. ';' .. path:gsub('~', home)
@@ -13,17 +12,17 @@ system.mkdir(config.dataDir)
 system.mkdir(config.parserLocation)
 
 appendPaths {
-	util.join {config.dataDir, '?' .. soname},
-	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. soname},
-	util.join {config.parserLocation, '?', 'parser' .. soname},
+	util.join {config.dataDir, '?' .. util.soname},
+	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. util.soname},
+	util.join {config.parserLocation, '?', 'parser' .. util.soname},
 }
 
 if PLATFORM ~= 'Windows' then
 	appendPaths {
-		'~/.luarocks/lib/lua/5.4/?' .. soname,
-		'~/.luarocks/lib64/lua/5.4/?' .. soname,
-		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. soname,
-		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. soname
+		'~/.luarocks/lib/lua/5.4/?' .. util.soname,
+		'~/.luarocks/lib64/lua/5.4/?' .. util.soname,
+		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. util.soname,
+		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. util.soname
 	}
 end
 
