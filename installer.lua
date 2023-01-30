@@ -56,7 +56,7 @@ local function downloadParser(av, lang)
 	local url = string.format('https://nightly.link/TorchedSammy/evergreen-builds/workflows/parsers/master/tree-sitter-%s-%s-x86_64.zip', lang, string.lower(PLATFORM))
 	local parserDir = util.join {config.parserLocation, lang}
 
-	local out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s\\%s.%s" -Force ) -Uri %s', parserDir, lang, soname, url)})
+	local out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s\\%s.%s" -Force ) -Uri %s', parserDir, lang, util.soname, url)})
 	if exitCode ~= 0 then
 		core.error('An error occured while attempting to install the parser\n' .. out)
 	else
