@@ -55,13 +55,20 @@ end
 local function downloadParser(av, lang)
 	local url = string.format('https://nightly.link/TorchedSammy/evergreen-builds/workflows/parsers/master/tree-sitter-%s-%s-x86_64.zip', lang, string.lower(PLATFORM))
 	local parserDir = util.join {config.parserLocation, lang}
-	local parserDest = util.join {parserDir, lang .. util.soname}
+	local parserDest = util.join {parserDir, lang .. '.zip'}
 
 	system.mkdir(parserDir)
 
 	local out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', parserDest, url)})
 	if exitCode ~= 0 then
-		core.error('An error occured while attempting to install the parser\n' .. out)
+		core.error('An error occured while attempting to download the parser\n' .. out)
+		return
+	end
+
+	local out, exitCode = exec({'tar', '-xf', lang .. '.zip'}, {cwd = parserDir})
+	if exitCode ~= 0 then
+		core.error('An error occured while attempting to download the parser\n' .. out)
+		return
 	else
 		core.log('Finished installing parser for ' .. lang)
 		if getmetatable(av) == DocView and languages.fromDoc(av.doc) == lang then
