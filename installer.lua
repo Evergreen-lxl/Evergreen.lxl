@@ -57,6 +57,8 @@ local function downloadParser(av, lang)
 	local parserDir = util.join {config.parserLocation, lang}
 	local parserDest = util.join {parserDir, lang .. util.soname}
 
+	system.mkdir(parserDir)
+
 	local out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', parserDest, url)})
 	if exitCode ~= 0 then
 		core.error('An error occured while attempting to install the parser\n' .. out)
