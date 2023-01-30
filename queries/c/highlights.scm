@@ -114,6 +114,15 @@
  (preproc_defined)
 ]  @function.macro
 
+;;(((field_expression
+;;     (field_identifier) @property)) @_parent
+;; (#not-has-parent? @_parent template_method function_declarator call_expression))
+
+;;(field_designator) @property
+;;(((field_identifier) @property)
+;; (#has-ancestor? @property field_declaration)
+;; (#not-has-ancestor? @property function_declarator))
+
 (statement_identifier) @label
 
 [
@@ -126,20 +135,32 @@
 
 (type_qualifier) @type.qualifier
 
+(linkage_specification
+  "extern" @storageclass)
+
 (type_definition
   declarator: (type_identifier) @type.definition)
 
 (primitive_type) @type.builtin
 
+((identifier) @constant
+ (#match? @constant "^[A-Z][A-Z0-9_]+$"))
 (enumerator
   name: (identifier) @constant)
 (case_statement
   value: (identifier) @constant)
 
+((identifier) @constant.builtin
+    (#any-of? @constant.builtin "stderr" "stdin" "stdout"))
+
 ;; Preproc def / undef
 (preproc_def
   name: (_) @constant)
- 
+(preproc_call
+  directive: (preproc_directive) @_u
+  argument: (_) @constant
+  (#eq? @_u "#undef"))
+
 (call_expression
   function: (identifier) @function.call)
 (call_expression
@@ -177,7 +198,7 @@
    declarator: (pointer_declarator
     declarator: (pointer_declarator
      declarator: (identifier) @parameter))))
-   
+
 (preproc_params (identifier) @parameter)
 
 [

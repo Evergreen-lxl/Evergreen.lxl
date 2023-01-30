@@ -37,7 +37,7 @@ function M.init(doc)
 						if src == match then return true end
 					end
 					return false
-				end
+				end,
 			},
 			mlNodes = {}
 		}
