@@ -1,4 +1,5 @@
 -- mod-version:3
+local core = require 'core'
 local config = require 'plugins.evergreen.config'
 local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
@@ -24,6 +25,56 @@ if PLATFORM ~= 'Windows' then
 		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. util.soname,
 		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. util.soname
 	}
+end
+
+local function exec(cmd, opts)
+	local proc = process.start(cmd, opts or {})
+	if proc then
+		while proc:running() do
+			coroutine.yield(0.1)
+		end
+		return (proc:read_stdout() or '<no stdout>\n') .. (proc:read_stderr() or '<no stderr>'), proc:returncode()
+	end
+
+	return nil
+end
+
+local ok, err = pcall(require, 'ltreesitter')
+core.log(err)
+if not ok then
+	core.add_thread(function()
+		core.log 'Could not require ltreesitter, attempting to install...'
+		local url = string.format('https://nightly.link/TorchedSammy/evergreen-builds/workflows/ltreesitter/master/ltreesitter-%s.zip', string.lower(PLATFORM))
+		local ltreesitterDest = util.join {config.dataDir, 'ltreesitter' .. util.soname}
+
+		local out, exitCode
+		if PLATFORM == 'Windows' then
+			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', ltreesitterDest, url)})
+			if exitCode ~= 0 then
+				core.error('An error occured while attempting to download ltreesitter\n' .. out)
+				return
+			end
+
+			out, exitCode = exec({'tar', '-xf', 'ltreesitter-' .. string.lower(PLATFORM) .. '.zip'}, {cwd = config.dataDir})
+		else
+			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter-' .. string.lower(PLATFORM) .. '.zip'})
+			if exitCode ~= 0 then
+				core.error('An error occured while attempting to download ltreesitter\n' .. out)
+				return
+			end
+
+			out, exitCode = exec({'unzip', 'ltreesitter-' .. string.lower(PLATFORM) .. '.zip'}, {cwd = config.dataDir})
+		end
+		if exitCode ~= 0 then
+			core.error('An error occured while attempting to download ltreesitter\n' .. out)
+			return
+		else
+			core.log('Finished installing ltreesitter!')
+		end
+
+		core.reload_module 'plugins.evergreen'
+	end)
+	return
 end
 
 local common = require 'core.common'
