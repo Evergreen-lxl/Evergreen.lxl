@@ -26,7 +26,7 @@ If you want more languages supported, open an issue.
 
 # Requirements
 - Lite XL 2.1+
-- ltreesitter master via Luarocks (`luarocks install ltreesitter --local --dev`)
+- [ltreesitter](#ltreesitter-installation) (manually or via LuaRocks)
 
 # Install
 ## Express Install
@@ -45,8 +45,16 @@ git clone https://github.com/TorchedSammy/Evergreen.lxl
 ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
-## Installing ltreesitter manually
-ltreesitter does not officially support Lite XL.
+## ltreesitter Installation
+
+The simplest way to install ltreesitter is to run the following command
+(assuming LuaRocks is installed):
+
+```sh
+luarocks install ltreesitter --local --dev
+```
+
+This may work, but ltreesitter does not officially support Lite XL.
 You may encounter problems when installing it via LuaRocks
 which might return error messages similar to these or cause crashes:
 
