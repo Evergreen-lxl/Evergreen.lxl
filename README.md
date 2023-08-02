@@ -75,7 +75,7 @@ In that case, you need to install a special version of ltreesitter for Lite XL.
 > You **must** upgrade to the [`master`](https://github.com/lite-xl/lite-xl/tree/master) version of Lite XL.
 
 ```sh
-git clone -b lite-xl-plugin-api https://github.com/takase1121/ltreesitter.git
+git clone --recursive -b lite-xl-plugin-api https://github.com/takase1121/ltreesitter.git
 cd ltreesitter
 make ltreesitter.so
 cp ltreesitter.so ~/.config/lite-xl/ltreesitter.so
