@@ -44,34 +44,26 @@ core.log('%s', ok)
 if not ok then
 	core.add_thread(function()
 		core.log 'Could not require ltreesitter, attempting to install...'
-		local url = string.format('https://nightly.link/TorchedSammy/evergreen-builds/workflows/ltreesitter/master/ltreesitter-%s.zip', string.lower(PLATFORM))
-		local ltreesitterDest = util.join {config.dataDir, 'ltreesitter' .. util.soname}
+		local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/builds/ltreesitter%s', util.soname)
 
 		local out, exitCode
 		if PLATFORM == 'Windows' then
-			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', ltreesitterDest, url)})
+			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', util.join {config.dataDir, 'ltreesitter' .. util.soname}, url)})
 			if exitCode ~= 0 then
-				core.error('An error occured while attempting to download ltreesitter\n' .. out)
+				core.error('An error occured while attempting to download ltreesitter\n%s', out)
 				return
+			else
+				core.log('Finished installing ltreesitter!')
 			end
-
-			out, exitCode = exec({'tar', '-xf', 'ltreesitter-' .. string.lower(PLATFORM) .. '.zip'}, {cwd = config.dataDir})
 		else
-			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter-' .. string.lower(PLATFORM) .. '.zip'})
+			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter' .. util.soname})
 			if exitCode ~= 0 then
-				core.error('An error occured while attempting to download ltreesitter\n' .. out)
+				core.error('An error occured while attempting to download ltreesitter\n%s', out)
 				return
+			else
+				core.log('%s', 'Finished installing ltreesitter!')
 			end
-
-			out, exitCode = exec({'unzip', 'ltreesitter-' .. string.lower(PLATFORM) .. '.zip'}, {cwd = config.dataDir})
 		end
-		if exitCode ~= 0 then
-			core.error('An error occured while attempting to download ltreesitter\n' .. out)
-			return
-		else
-			core.log('Finished installing ltreesitter!')
-		end
-
 		core.reload_module 'plugins.evergreen'
 	end)
 	return
