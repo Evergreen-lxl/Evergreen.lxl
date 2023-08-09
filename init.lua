@@ -39,8 +39,8 @@ local function exec(cmd, opts)
 	return nil
 end
 
-local ok, err = pcall(require, 'ltreesitter')
-core.log(err)
+local ok = package.searchpath('ltreesitter', package.cpath)
+core.log('%s', ok)
 if not ok then
 	core.add_thread(function()
 		core.log 'Could not require ltreesitter, attempting to install...'
