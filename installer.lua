@@ -27,14 +27,6 @@ end
 local function compileParser(av, lang)
 	local parserDir = util.join {config.parserLocation, lang}
 	exec {'git', 'clone', languages.exts[lang], parserDir}
-
-	do
-		local out, exitCode = exec({'tree-sitter', 'generate'}, {cwd = parserDir})
-		if exitCode ~= 0 then
-			core.error('Could not generate parser. Parser install *may* still succeed. Do you have the tree-sitter CLI in your PATH?\nHere are some logs:\n'..out)
-		end
-	end
-
 	do
 		local out, exitCode = exec(PLATFORM == 'Windows' and
 		{'cmd', '/c', 'gcc -o parser.so -shared src\\*.c -Os -I.\\src -fPIC'} or
@@ -53,21 +45,21 @@ local function compileParser(av, lang)
 end
 
 local function downloadParser(av, lang)
-	local url = string.format('https://nightly.link/TorchedSammy/evergreen-builds/workflows/parsers/master/tree-sitter-%s-%s-x86_64.zip', lang, string.lower(PLATFORM))
+	local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/parsers/tree-sitter-%s%s', lang, util.soname)
 	local parserDir = util.join {config.parserLocation, lang}
-	local parserDest = util.join {parserDir, lang .. '.zip'}
+	local parserDest = util.join {parserDir, lang .. util.soname}
 
 	system.mkdir(parserDir)
 
-	local out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', parserDest, url)})
-	if exitCode ~= 0 then
-		core.error('An error occured while attempting to download the parser\n' .. out)
-		return
+	local out, exitCode
+	if PLATFORM == 'Windows' then
+		out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', parserDest, url)})
+	else
+		out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', parserDir, '--fail', url, '-o', 'parser' .. util.soname})
 	end
 
-	local out, exitCode = exec({'tar', '-xf', lang .. '.zip'}, {cwd = parserDir})
 	if exitCode ~= 0 then
-		core.error('An error occured while attempting to download the parser\n' .. out)
+		core.error('An error occured while attempting to download the parser\n%s', out)
 		return
 	else
 		core.log('Finished installing parser for ' .. lang)
@@ -91,11 +83,13 @@ command.add(nil, {
 				core.log('Installing parser for ' .. lang)
 
 				core.add_thread(function()
+					downloadParser(av, lang)
+					--[[
 					if PLATFORM == 'Windows' then
-						downloadParser(av, lang)
 					else
 						compileParser(av, lang)
 					end
+					]]--
 				end)
 			end,
 			suggest = function()
