@@ -42,6 +42,22 @@ function M.init(doc)
 					local src = t:source()
 					local res = string.match(src, pattern)
 					return res ~= nil
+				end,
+				['contains?'] = function(t, search)
+					local n = t
+					local res = string.find(n:source(), search)
+					if res then return true end
+
+					while not done do
+						n = n:prev_named_sibling()
+						if not n then break end
+
+						local res = string.find(n:source(), search)
+						if res then
+							return true
+						end
+					end
+					return false
 				end
 			},
 			mlNodes = {}
