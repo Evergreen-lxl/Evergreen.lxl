@@ -1,5 +1,3 @@
-;; copied from nvim-treesitter; we're gonna have our own by the time this
-;; plugin ever gets off the ground
 ;; Forked from tree-sitter-go
 ;; Copyright (c) 2014 Max Brunsfeld (The MIT License)
 
@@ -37,8 +35,16 @@
 (method_declaration
   name: (field_identifier) @method)
 
-(method_spec 
-  name: (field_identifier) @method) 
+(method_spec
+  name: (field_identifier) @method)
+
+; Constructors
+
+((call_expression (identifier) @constructor)
+  (#lua-match? @constructor "^[nN]ew.*$"))
+
+((call_expression (identifier) @constructor)
+  (#lua-match? @constructor "^[mM]ake.*$"))
 
 ; Operators
 
@@ -58,6 +64,8 @@
   "&"
   "&&"
   "&="
+  "&^"
+  "&^="
   "%"
   "%="
   "^"
@@ -86,15 +94,12 @@
 
 [
   "break"
-  "chan"
   "const"
   "continue"
   "default"
   "defer"
-  "go"
   "goto"
   "interface"
-  "map"
   "range"
   "select"
   "struct"
@@ -105,6 +110,7 @@
 
 "func" @keyword.function
 "return" @keyword.return
+"go" @keyword.coroutine
 
 "for" @repeat
 
@@ -119,6 +125,61 @@
   "switch"
   "if"
  ] @conditional
+
+
+;; Builtin types
+
+[ "chan" "map" ] @type.builtin
+
+((type_identifier) @type.builtin
+ (#any-of? @type.builtin
+           "any"
+           "bool"
+           "byte"
+           "comparable"
+           "complex128"
+           "complex64"
+           "error"
+           "float32"
+           "float64"
+           "int"
+           "int16"
+           "int32"
+           "int64"
+           "int8"
+           "rune"
+           "string"
+           "uint"
+           "uint16"
+           "uint32"
+           "uint64"
+           "uint8"
+           "uintptr"))
+
+
+;; Builtin functions
+
+((identifier) @function.builtin
+ (#any-of? @function.builtin
+           "append"
+           "cap"
+           "clear"
+           "close"
+           "complex"
+           "copy"
+           "delete"
+           "imag"
+           "len"
+           "make"
+           "max"
+           "min"
+           "new"
+           "panic"
+           "print"
+           "println"
+           "real"
+           "recover"))
+
 
 ; Delimiters
 
@@ -140,20 +201,50 @@
 (interpreted_string_literal) @string
 (raw_string_literal) @string
 (rune_literal) @string
-;; (escape_sequence) @string.escape
+(escape_sequence) @string.escape
 
 (int_literal) @number
 (float_literal) @float
 (imaginary_literal) @number
 
-(true) @boolean
-(false) @boolean
-(nil) @constant.builtin
+[
+ (true)
+ (false)
+] @boolean
+
+[
+ (nil)
+ (iota)
+] @constant.builtin
 
 (keyed_element
   . (literal_element (identifier) @field))
 (field_declaration name: (field_identifier) @field)
 
-(comment) @comment
+; Comments
+
+(comment) @comment @spell
+
+;; Doc Comments
+
+(source_file . (comment)+ @comment.documentation)
+
+(source_file
+  (comment)+ @comment.documentation
+  . (const_declaration))
+
+(source_file
+  (comment)+ @comment.documentation
+  . (function_declaration))
+
+(source_file
+  (comment)+ @comment.documentation
+  . (type_declaration))
+
+(source_file
+  (comment)+ @comment.documentation
+  . (var_declaration))
+
+; Errors
 
 (ERROR) @error

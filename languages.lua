@@ -34,9 +34,9 @@ M.exts = {
 	c = 'https://github.com/tree-sitter/tree-sitter-c',
 	cpp = 'https://github.com/tree-sitter/tree-sitter-cpp',
 	diff = 'https://github.com/the-mikedavis/tree-sitter-diff',
-	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
 	go = 'https://github.com/tree-sitter/tree-sitter-go',
 	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
+	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
 	rust = 'https://github.com/tree-sitter/tree-sitter-rust',
 	zig = 'https://github.com/maxxnino/tree-sitter-zig'
 }
