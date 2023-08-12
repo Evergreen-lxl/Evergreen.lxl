@@ -25,6 +25,9 @@ local altMap = {
 		'label'
 	},
 	constant = {'constant.builtin'},
+	comment = {
+		'comment.documentation'
+	},
 	keyword = {
 		'attribute',
 		'conditional',

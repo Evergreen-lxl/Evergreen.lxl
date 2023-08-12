@@ -128,6 +128,7 @@ These are the available highlight groups:
 - `boolean`: A group to highlight booleans specifically
 - `character`
 - `comment`
+- `comment.documentation`: Doc comments
 - `conditional`: Keywords relating to conditionals (`if`/`else`)
 - `conditional.ternary`
 - `constant`
