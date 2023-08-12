@@ -1,4 +1,3 @@
-;; stolen from nvim-treesitter
 ;; Forked from tree-sitter-go
 ;; Copyright (c) 2014 Max Brunsfeld (The MIT License)
 
@@ -15,9 +14,6 @@
 (variadic_parameter_declaration (identifier) @parameter)
 
 (label_name) @label
-
-((identifier) @constant
- (#eq? @constant "_"))
 
 (const_spec
   name: (identifier) @constant)
@@ -39,8 +35,16 @@
 (method_declaration
   name: (field_identifier) @method)
 
-(method_spec 
-  name: (field_identifier) @method) 
+(method_spec
+  name: (field_identifier) @method)
+
+; Constructors
+
+((call_expression (identifier) @constructor)
+  (#lua-match? @constructor "^[nN]ew.*$"))
+
+((call_expression (identifier) @constructor)
+  (#lua-match? @constructor "^[mM]ake.*$"))
 
 ; Operators
 
@@ -60,6 +64,8 @@
   "&"
   "&&"
   "&="
+  "&^"
+  "&^="
   "%"
   "%="
   "^"
@@ -88,15 +94,12 @@
 
 [
   "break"
-  "chan"
   "const"
   "continue"
   "default"
   "defer"
-  "go"
   "goto"
   "interface"
-  "map"
   "range"
   "select"
   "struct"
@@ -107,6 +110,7 @@
 
 "func" @keyword.function
 "return" @keyword.return
+"go" @keyword.coroutine
 
 "for" @repeat
 
@@ -125,11 +129,14 @@
 
 ;; Builtin types
 
+[ "chan" "map" ] @type.builtin
+
 ((type_identifier) @type.builtin
  (#any-of? @type.builtin
            "any"
            "bool"
            "byte"
+           "comparable"
            "complex128"
            "complex64"
            "error"
@@ -156,6 +163,7 @@
  (#any-of? @function.builtin
            "append"
            "cap"
+           "clear"
            "close"
            "complex"
            "copy"
@@ -163,6 +171,8 @@
            "imag"
            "len"
            "make"
+           "max"
+           "min"
            "new"
            "panic"
            "print"
@@ -191,20 +201,50 @@
 (interpreted_string_literal) @string
 (raw_string_literal) @string
 (rune_literal) @string
-;; (escape_sequence) @string.escape
+(escape_sequence) @string.escape
 
 (int_literal) @number
 (float_literal) @float
 (imaginary_literal) @number
 
-(true) @boolean
-(false) @boolean
-(nil) @constant.builtin
+[
+ (true)
+ (false)
+] @boolean
+
+[
+ (nil)
+ (iota)
+] @constant.builtin
 
 (keyed_element
   . (literal_element (identifier) @field))
 (field_declaration name: (field_identifier) @field)
 
-(comment) @comment
+; Comments
+
+(comment) @comment @spell
+
+;; Doc Comments
+
+(source_file . (comment)+ @comment.documentation)
+
+(source_file
+  (comment)+ @comment.documentation
+  . (const_declaration))
+
+(source_file
+  (comment)+ @comment.documentation
+  . (function_declaration))
+
+(source_file
+  (comment)+ @comment.documentation
+  . (type_declaration))
+
+(source_file
+  (comment)+ @comment.documentation
+  . (var_declaration))
+
+; Errors
 
 (ERROR) @error

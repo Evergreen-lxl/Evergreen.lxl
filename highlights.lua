@@ -38,6 +38,11 @@ function M.init(doc)
 					end
 					return false
 				end,
+				['lua-match?'] = function(t, pattern)
+					local src = t:source()
+					local res = string.match(src, pattern)
+					return res ~= nil
+				end
 			},
 			mlNodes = {}
 		}
