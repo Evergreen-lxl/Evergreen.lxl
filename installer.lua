@@ -60,7 +60,8 @@ local function downloadParser(av, lang)
 
 	if exitCode ~= 0 then
 		core.error('An error occured while attempting to download the parser\n%s', out)
-		return
+		core.log('Evergreen will attempt to compile the parser instead.')
+		compileParser(av, lang)
 	else
 		core.log('Finished installing parser for ' .. lang)
 		if getmetatable(av) == DocView and languages.fromDoc(av.doc) == lang then
