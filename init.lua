@@ -44,25 +44,19 @@ core.log('%s', ok)
 if not ok then
 	core.add_thread(function()
 		core.log 'Could not require ltreesitter, attempting to install...'
-		local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/builds/ltreesitter%s', util.soname)
+		local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
 
 		local out, exitCode
 		if PLATFORM == 'Windows' then
 			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', util.join {config.dataDir, 'ltreesitter' .. util.soname}, url)})
-			if exitCode ~= 0 then
-				core.error('An error occured while attempting to download ltreesitter\n%s', out)
-				return
-			else
-				core.log('Finished installing ltreesitter!')
-			end
 		else
 			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter' .. util.soname})
-			if exitCode ~= 0 then
-				core.error('An error occured while attempting to download ltreesitter\n%s', out)
-				return
-			else
-				core.log('%s', 'Finished installing ltreesitter!')
-			end
+		end
+		if exitCode ~= 0 then
+			core.error('An error occured while attempting to download ltreesitter\n%s', out)
+			return
+		else
+			core.log('Finished installing ltreesitter!')
 		end
 		core.reload_module 'plugins.evergreen'
 	end)
