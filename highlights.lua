@@ -30,7 +30,36 @@ function M.init(doc)
 		doc.ts = {
 			parser = p,
 			tree = p:parse_with(parser.input(doc.lines)),
-			query = p:query(M.query(languages.fromDoc(doc))),
+			query = p:query(M.query(languages.fromDoc(doc))):with {
+				['any-of?'] = function(t, ...)
+					local src = t:source()
+					for _, match in ipairs {...} do
+						if src == match then return true end
+					end
+					return false
+				end,
+				['lua-match?'] = function(t, pattern)
+					local src = t:source()
+					local res = string.match(src, pattern)
+					return res ~= nil
+				end,
+				['contains?'] = function(t, search)
+					local n = t
+					local res = string.find(n:source(), search)
+					if res then return true end
+
+					while not done do
+						n = n:prev_named_sibling()
+						if not n then break end
+
+						local res = string.find(n:source(), search)
+						if res then
+							return true
+						end
+					end
+					return false
+				end
+			},
 			mlNodes = {}
 		}
 	end
