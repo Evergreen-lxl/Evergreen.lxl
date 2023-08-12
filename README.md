@@ -11,7 +11,7 @@ It is work in progress, but functions well.
 
 | Without Evergreen                              | With Evergreen                                 |
 | ---------------------------------------------- | ---------------------------------------------- |
-| ![](https://safe.kashima.moe/lye07t6hf52h.png) | ![](https://safe.kashima.moe/j1j4a7vbgyqh.png) |
+| ![](before.png)                                |                                 ![](after.png) |
 
 # Supported Languages
 - [x] [C][tree-sitter-c]
@@ -26,14 +26,14 @@ If you want more languages supported, open an issue.
 
 # Requirements
 - Lite XL 2.1+
-- [ltreesitter](#ltreesitter-installation) (manually or via LuaRocks)
+- [ltreesitter](#ltreesitter-installation) (automatic, manually or via LuaRocks)
 
 # Install
 ## Express Install
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
-{'TorchedSammy/Evergreen.lxl', run = 'luarocks install ltreesitter --local --dev'},
+{'TorchedSammy/Evergreen.lxl'},
 ```
 
 ## Manually
@@ -46,7 +46,15 @@ ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
 ## ltreesitter Installation
+### Automatic
+The easiest way to install ltreesitter is by not installing it at all!
+Evergreen will automatically download a compatible ltreesitter build and
+reload itself.
 
+If it fails to download for any reason though, that should be reported
+as an issue here. In the mean time, ltreesitter can be installed manually.
+
+### Manual Install
 The simplest way to install ltreesitter is to run the following command
 (assuming LuaRocks is installed):
 
@@ -82,12 +90,16 @@ In that case, you need to install a special version of ltreesitter for Lite XL.
 > **Note**
 > You **must** upgrade to the [`master`](https://github.com/lite-xl/lite-xl/tree/master) version of Lite XL.
 
+You can either compile ltreesitter via the command below:
 ```sh
 git clone --recursive -b lite-xl-plugin-api https://github.com/takase1121/ltreesitter.git
 cd ltreesitter
 make ltreesitter.so
 cp ltreesitter.so ~/.config/lite-xl/ltreesitter.so
 ```
+
+Or download an appropriate release from [here](https://github.com/TorchedSammy/evergreen-builds/releases/tag/ltreesitter),
+where ltreesitter**.so** is Linux, and ltreesitter**.dll** is Windows.
 
 # Usage
 To use Evergreen, you have to install the parser for your language of choice.
