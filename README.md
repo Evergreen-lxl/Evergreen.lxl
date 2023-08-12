@@ -102,7 +102,7 @@ cp ltreesitter.so ~/.config/lite-xl/ltreesitter.so
 ```
 
 Or download an appropriate release from [here](https://github.com/TorchedSammy/evergreen-builds/releases/tag/ltreesitter),
-where ltreesitter**.so** is Linux, and ltreesitter**.dll** is Windows.
+where ltreesitter.so is Linux, and ltreesitter.dll is Windows.
 
 # Usage
 To use Evergreen, you have to install the parser for your language of choice.
