@@ -1,4 +1,7 @@
 -- mod-version:3
+local core = require 'core'
+local config = require 'plugins.evergreen.config'
+local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
@@ -6,12 +9,59 @@ local function appendPaths(paths)
 	end
 end
 
+system.mkdir(config.dataDir)
+system.mkdir(config.parserLocation)
+
 appendPaths {
-	'~/.luarocks/lib/lua/5.4/?.so',
-	'~/.luarocks/lib64/lua/5.4/?.so',
-	'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?.so',
-	'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser.so'
+	util.join {config.dataDir, '?' .. util.soname},
+	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. util.soname},
+	util.join {config.parserLocation, '?', 'parser' .. util.soname},
 }
+
+if PLATFORM ~= 'Windows' then
+	appendPaths {
+		'~/.luarocks/lib/lua/5.4/?' .. util.soname,
+		'~/.luarocks/lib64/lua/5.4/?' .. util.soname,
+		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. util.soname,
+		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. util.soname
+	}
+end
+
+local function exec(cmd, opts)
+	local proc = process.start(cmd, opts or {})
+	if proc then
+		while proc:running() do
+			coroutine.yield(0.1)
+		end
+		return (proc:read_stdout() or '<no stdout>\n') .. (proc:read_stderr() or '<no stderr>'), proc:returncode()
+	end
+
+	return nil
+end
+
+local ok = package.searchpath('ltreesitter', package.cpath)
+core.log('%s', ok)
+if not ok then
+	core.add_thread(function()
+		core.log 'Could not require ltreesitter, attempting to install...'
+		local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
+
+		local out, exitCode
+		if PLATFORM == 'Windows' then
+			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', util.join {config.dataDir, 'ltreesitter' .. util.soname}, url)})
+		else
+			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter' .. util.soname})
+		end
+		if exitCode ~= 0 then
+			core.error('An error occured while attempting to download ltreesitter\n%s', out)
+			return
+		else
+			core.log('Finished installing ltreesitter!')
+		end
+		core.reload_module 'plugins.evergreen'
+	end)
+	return
+end
 
 local common = require 'core.common'
 local command = require 'core.command'
