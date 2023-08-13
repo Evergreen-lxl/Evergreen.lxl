@@ -2,13 +2,13 @@
 
 "return" @keyword.return
 
+(label_statement) @label
+
 [
  "goto"
  "in"
  "local"
 ] @keyword
-
-(label_statement) @label
 
 (break_statement) @keyword
 

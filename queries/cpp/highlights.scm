@@ -216,7 +216,7 @@
 (preproc_function_def
   name: (identifier) @function.macro)
 
-(comment) @comment @spell
+(comment) @comment
 
 ((comment) @comment.documentation
   (#lua-match? @comment.documentation "^/[*][*][^*].*[*]/$"))
@@ -263,6 +263,10 @@
 
 ;(field_expression) @parameter ;; How to highlight this?
 
+(((field_expression
+     (field_identifier) @method)) @_parent
+ (#has-parent? @_parent template_method function_declarator))
+
 (field_declaration
   (field_identifier) @field)
 
@@ -305,6 +309,12 @@
     (qualified_identifier
       (qualified_identifier
         (identifier) @function))))
+((qualified_identifier
+  (qualified_identifier
+    (qualified_identifier
+      (qualified_identifier
+        (identifier) @function)))) @_parent
+  (#has-ancestor? @_parent function_declarator))
 
 (function_declarator
   (template_function
@@ -326,6 +336,12 @@
     (qualified_identifier
       (qualified_identifier
         (identifier) @function.call))))
+((qualified_identifier
+  (qualified_identifier
+    (qualified_identifier
+      (qualified_identifier
+        (identifier) @function.call)))) @_parent
+  (#has-ancestor? @_parent call_expression))
 
 (call_expression
   (template_function
@@ -345,6 +361,13 @@
       (qualified_identifier
         (template_function
           (identifier) @function.call)))))
+((qualified_identifier
+  (qualified_identifier
+    (qualified_identifier
+      (qualified_identifier
+        (template_function
+          (identifier) @function.call))))) @_parent
+  (#has-ancestor? @_parent call_expression))
 
 ; methods
 (function_declarator
@@ -462,5 +485,3 @@
   ["<" ">"] @punctuation.bracket)
 
 (literal_suffix) @operator
-
-(ERROR) @error
