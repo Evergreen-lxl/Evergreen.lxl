@@ -213,14 +213,14 @@ function Highlight:tokenize_line(idx, state)
 	}) do
 		local startPoint = n:start_point()
 		local endPoint = n:end_point()
-
 		if i > endPoint.row then goto continue end
 		if i < startPoint.row then break end
+		-- print(i, n, n:source(), startPoint.column + 1, endPoint.column + 1)
 
 		if not lastNode and startPoint.column > 0 and i == startPoint.row then
 			-- first node
-				tokens[#tokens + 1] = 'normal'
-				tokens[#tokens + 1] = currentLine:sub(1, startPoint.column)
+			tokens[#tokens + 1] = 'normal'
+			tokens[#tokens + 1] = currentLine:sub(1, startPoint.column)
 		elseif lastNode and lastEndPoint.row == startPoint.row and startPoint.column - lastEndPoint.column > 0 then
 			tokens[#tokens + 1] = 'normal'
 			tokens[#tokens + 1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
@@ -260,6 +260,15 @@ function Highlight:tokenize_line(idx, state)
 			end
 		end
 
+		if lastEndPoint and lastEndPoint.column > endPoint.column then
+			-- print("THIS IS WEIRD")
+			local prevGroup, prevSource = tokens[#tokens - 1], tokens[#tokens]
+			tokens[#tokens - 1] = 'normal'
+			tokens[#tokens] = currentLine:sub(lastStartPoint.column + 1, startPoint.column)
+			tokens[#tokens + 1] = prevGroup
+			tokens[#tokens + 1] = prevSource
+		end
+
 		lastNode = n
 		lastName = nName
 		lastStartPoint = startPoint
@@ -278,6 +287,7 @@ function Highlight:tokenize_line(idx, state)
 		tokens[#tokens+1] = currentLine
 	end
 
+	print(i, common.serialize(tokens))
 	return res
 end
 
