@@ -71,12 +71,16 @@ M.addPredicate('has-ancestor?', function(t, ...)
 
 	return false
 end)
-M.addPredicate('has-parent?', function(t, type)
+M.addPredicate('has-parent?', function(t, ...)
 	local c = t:create_cursor()
 	c:goto_parent()
 
 	local n = c:current_node()
-	return n:type() == type
+	for _, typ in ipairs {...} do
+		if n:type() == typ then return true end
+	end
+
+	return false
 end)
 
 --- @param doc core.doc
