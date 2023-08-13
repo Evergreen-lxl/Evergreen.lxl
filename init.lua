@@ -287,7 +287,6 @@ function Highlight:tokenize_line(idx, state)
 		tokens[#tokens+1] = currentLine
 	end
 
-	print(i, common.serialize(tokens))
 	return res
 end
 
