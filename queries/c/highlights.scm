@@ -121,7 +121,14 @@
 
 (preproc_defined) @function.macro
 
+(((field_expression
+     (field_identifier) @property)) @_parent
+ (#not-has-parent? @_parent template_method function_declarator call_expression))
+
 (field_designator) @property
+(((field_identifier) @property)
+ (#has-ancestor? @property field_declaration)
+ (#not-has-ancestor? @property function_declarator))
 
 (statement_identifier) @label
 
@@ -193,6 +200,9 @@
 ((call_expression
   function: (identifier) @function.builtin)
   (#lua-match? @function.builtin "^__builtin_"))
+((call_expression
+   function: (identifier) @function.builtin)
+  (#has-ancestor? @function.builtin attribute_specifier))
 
 ;; Preproc def / undef
 (preproc_def
@@ -216,7 +226,7 @@
 (preproc_function_def
   name: (identifier) @function.macro)
 
-(comment) @comment @spell
+(comment) @comment
 
 ((comment) @comment.documentation
   (#lua-match? @comment.documentation "^/[*][*][^*].*[*]/$"))

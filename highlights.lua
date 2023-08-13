@@ -1,7 +1,9 @@
 local parser = require 'plugins.evergreen.parser'
 local languages = require 'plugins.evergreen.languages'
 
-local M = {}
+local M = {
+	predicates = {}
+}
 
 local function localPath()
    local str = debug.getinfo(2, 'S').source:sub(2)
@@ -20,6 +22,63 @@ function M.query(ftype)
 	return highlights
 end
 
+function M.addPredicate(name, func)
+	M.predicates[name] = func
+	M.predicates['not-' .. name] = function(t, ...) return not func(t, ...) end
+end
+
+M.addPredicate('any-of?', function(t, ...)
+	local src = t:source()
+	for _, match in ipairs {...} do
+		if src == match then return true end
+	end
+	return false
+end)
+M.addPredicate('lua-match?', function(t, pattern)
+	local src = t:source()
+	local res = string.match(src, pattern)
+	return res ~= nil
+end)
+M.addPredicate('contains?', function(t, search)
+	local n = t
+	local res = string.find(n:source(), search)
+	if res then return true end
+
+	while not done do
+		n = n:prev_named_sibling()
+		if not n then break end
+
+		local res = string.find(n:source(), search)
+		if res then
+			return true
+		end
+	end
+	return false
+end)
+M.addPredicate('has-ancestor?', function(t, ...)
+	local c = t:create_cursor()
+	local went = c:goto_parent()
+	local n = c:current_node()
+
+	while went do
+		for _, typ in ipairs {...} do
+			if n:type() == typ then return true end
+		end
+
+		went = c:goto_parent()
+		n = c:current_node()
+	end
+
+	return false
+end)
+M.addPredicate('has-parent?', function(t, type)
+	local c = t:create_cursor()
+	c:goto_parent()
+
+	local n = c:current_node()
+	return n:type() == type
+end)
+
 --- @param doc core.doc
 function M.init(doc)
 	if not doc.filename then return end
@@ -30,36 +89,7 @@ function M.init(doc)
 		doc.ts = {
 			parser = p,
 			tree = p:parse_with(parser.input(doc.lines)),
-			query = p:query(M.query(languages.fromDoc(doc))):with {
-				['any-of?'] = function(t, ...)
-					local src = t:source()
-					for _, match in ipairs {...} do
-						if src == match then return true end
-					end
-					return false
-				end,
-				['lua-match?'] = function(t, pattern)
-					local src = t:source()
-					local res = string.match(src, pattern)
-					return res ~= nil
-				end,
-				['contains?'] = function(t, search)
-					local n = t
-					local res = string.find(n:source(), search)
-					if res then return true end
-
-					while not done do
-						n = n:prev_named_sibling()
-						if not n then break end
-
-						local res = string.find(n:source(), search)
-						if res then
-							return true
-						end
-					end
-					return false
-				end
-			},
+			query = p:query(M.query(languages.fromDoc(doc))):with(M.predicates),
 			mlNodes = {}
 		}
 	end
