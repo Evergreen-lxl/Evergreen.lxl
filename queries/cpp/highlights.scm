@@ -216,7 +216,7 @@
 (preproc_function_def
   name: (identifier) @function.macro)
 
-(comment) @comment @spell
+(comment) @comment
 
 ((comment) @comment.documentation
   (#lua-match? @comment.documentation "^/[*][*][^*].*[*]/$"))
