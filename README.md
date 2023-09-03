@@ -16,9 +16,12 @@ It is work in progress, but functions well.
 # Supported Languages
 - [x] [C][tree-sitter-c]
 - [x] [C++][tree-sitter-cpp]
+- [ ] CSS
 - [x] [Diff][tree-sitter-diff]
 - [x] [Go][tree-sitter-go]
 - [x] [go.mod][tree-sitter-go-mod]
+- [ ] HTML
+- [x] [Javascript/JSX][tree-sitter-javascript]
 - [x] [Lua][tree-sitter-lua]
 - [x] [Rust][tree-sitter-rust]
 - [x] [Zig][tree-sitter-zig]
@@ -100,7 +103,7 @@ cp ltreesitter.so ~/.config/lite-xl/ltreesitter.so
 ```
 
 Or download an appropriate release from [here](https://github.com/TorchedSammy/evergreen-builds/releases/tag/ltreesitter),
-where ltreesitter**.so** is Linux, and ltreesitter**.dll** is Windows.
+where ltreesitter.so is Linux, and ltreesitter.dll is Windows.
 
 # Usage
 To use Evergreen, you have to install the parser for your language of choice.
@@ -133,6 +136,7 @@ These are the available highlight groups:
 - `conditional.ternary`
 - `constant`
 - `constant.builtin`: Constants that are builtins to the language (Go's `iota`, `nil`)
+- `constructor`: Constructors (like `new` functions)
 - `define`
 - `exception`: Keywords relating to exceptions (`try` and `catch`)
 - `field`: Like a field in a Lua table
@@ -159,6 +163,9 @@ These are the available highlight groups:
 - `storageclass`: `static`, `const` in C
 - `storageclass.lifetime`: Specifically for lifetimes in Rust currently
 - `string`
+- `tag`: HTML/JSX tags
+- `tag.delimiter`: <>
+- `tag.attribute`: Tag attributes
 - `text.diff.add`: Highlights additions in diffs
 - `text.diff.delete`: Highlights deletions in diffs
 - `type`
@@ -176,6 +183,7 @@ MIT
 [tree-sitter-diff]: https://github.com/the-mikedavis/tree-sitter-diff
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-go-mod]: https://github.com/camdencheek/tree-sitter-go-mod
+[tree-sitter-javascript]: https://github.com/tree-sitter/tree-sitter-javascript
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
 [tree-sitter-rust]: https://github.com/tree-sitter/tree-sitter-rust
 [tree-sitter-zig]: https://github.com/maxxnino/tree-sitter-zig

@@ -156,12 +156,6 @@
 
 (dot_index_expression field: (identifier) @field)
 
-(table_constructor
-[
-  "{"
-  "}"
-] @constructor)
-
 ;; Functions
 
 (parameters (identifier) @parameter)

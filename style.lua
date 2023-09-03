@@ -39,7 +39,8 @@ local altMap = {
 		'namespace',
 		'preproc',
 		'repeat',
-		'type.qualifier'
+		'type.qualifier',
+		'constructor'
 	},
 	keyword2 = {
 		'type', -- this is suitable i think?
@@ -60,6 +61,7 @@ local altMap = {
 		'function.call',
 		'function.macro',
 		'method',
+		'tag'
 	},
 	method = {'method.call'},
 	normal = {
@@ -68,6 +70,12 @@ local altMap = {
 		'punctuation.delimiter',
 		'variable'
 	},
+	attribute = {
+		'tag.attribute',
+	},
+	tag = {
+		'tag.delimiter'
+	}
 }
 
 addAlias('error', 'error', true)
