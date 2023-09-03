@@ -223,7 +223,7 @@
 
 ; Comments
 
-(comment) @comment @spell
+(comment) @comment
 
 ;; Doc Comments
 
