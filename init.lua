@@ -93,7 +93,7 @@ local function accumulateLen(tbl, s, e)
 	return len
 end
 
-local function incrementalHighlight(doc)
+local function incrementalHighlight(doc, row)
 	local old = doc.ts.tree
 	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
 
@@ -102,6 +102,19 @@ local function incrementalHighlight(doc)
 			doc.highlighter.lines[i] = false
 		end
 		doc.highlighter:invalidate(p.start_point.row + 1)
+	end
+
+	for n, _ in doc.ts.query:capture(doc.ts.tree:root(), {
+		row    = row - 1,
+		column = 0
+	}, {
+		row    = row - 1,
+		column = #doc.lines[row] - 1
+	}) do
+		for i = n:start_point().row + 1, n:end_point().row + 1 do
+			doc.highlighter.lines[i] = false
+		end
+		doc.highlighter:invalidate(n:start_point().row + 1)
 	end
 end
 
@@ -123,7 +136,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 			old_end_point = { row = tsLine, column = tsCol },
 			new_end_point = { row = tsLine, column = tsCol + text:len() },
 		}
-		incrementalHighlight(self)
+		incrementalHighlight(self, line)
 	end
 end
 
@@ -154,7 +167,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 			old_end_point = { row = line2 - 1, column = col2 - 1 },
 			new_end_point = { row = line1 - 1, column = col1 - 1 },
 		}
-		incrementalHighlight(self)
+		incrementalHighlight(self, line1)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
