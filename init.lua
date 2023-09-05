@@ -243,7 +243,7 @@ function Highlight:tokenize_line(idx, state)
 	
 	return {
 		init_state = state,
-		state      = {},
+		state      = state,
 		text       = txt,
 		tokens     = toks
 	}
