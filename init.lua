@@ -83,21 +83,11 @@ function Doc:new(filename, abs_filename, new_file)
 	highlights.init(self)
 end
 
-function table.slice(tbl, first, last, step)
-	local sliced = {}
-
-	for i = first or 1, last or #tbl, step or 1 do
-		sliced[#sliced+1] = tbl[i]
-	end
-
-	return sliced
-end
-
-local function accumulateLen(tbl)
+local function accumulateLen(tbl, s, e)
 	local len = 0
 
-	for _, entry in ipairs(tbl) do
-		len = len + entry:len()
+	for i=s,e do
+		len = len + tbl[i]:len()
 	end
 
 	return len
@@ -122,10 +112,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 	if self.treesit then
 		line, col = self:sanitize_position(line, col)
 
-		local lns = table.slice(self.lines, 1, line - 1)
-		local start = accumulateLen(lns)
-
-		local tsByte = start + col - 1
+		local tsByte = accumulateLen(self.lines, 1, line - 1) + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
 		self.ts.tree:edit_s {
@@ -157,10 +144,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 
-		local lns = table.slice(self.lines, 1, line1 - 1)
-		local start = accumulateLen(lns)
-
-		local tsByte = start + col1 - 1
+		local tsByte = accumulateLen(self.lines, 1, line1 - 1) + col1 - 1
 
 		self.ts.tree:edit_s {
 			start_byte    = tsByte,
