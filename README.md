@@ -22,13 +22,14 @@ It is work in progress, but functions well.
 - [x] [go.mod][tree-sitter-go-mod]
 - [ ] HTML
 - [x] [Javascript/JSX][tree-sitter-javascript]
+- [x] [Julia][tree-sitter-julia]
 - [x] [Lua][tree-sitter-lua]
 - [x] [Rust][tree-sitter-rust]
 
 If you want more languages supported, open an issue.
 
 # Requirements
-- Lite XL 2.1+
+- Lite XL 2.1+ or [Pragtical](https://github.com/pragtical/pragtical)
 - [ltreesitter](#ltreesitter-installation) (automatic, manually or via LuaRocks)
 
 # Install
@@ -182,5 +183,6 @@ MIT
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-go-mod]: https://github.com/camdencheek/tree-sitter-go-mod
 [tree-sitter-javascript]: https://github.com/tree-sitter/tree-sitter-javascript
+[tree-sitter-julia]: https://github.com/tree-sitter/tree-sitter-julia
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
 [tree-sitter-rust]: https://github.com/tree-sitter/tree-sitter-rust
