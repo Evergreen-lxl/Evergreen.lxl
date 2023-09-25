@@ -83,27 +83,17 @@ function Doc:new(filename, abs_filename, new_file)
 	highlights.init(self)
 end
 
-function table.slice(tbl, first, last, step)
-	local sliced = {}
-
-	for i = first or 1, last or #tbl, step or 1 do
-		sliced[#sliced+1] = tbl[i]
-	end
-
-	return sliced
-end
-
-local function accumulateLen(tbl)
+local function accumulateLen(tbl, s, e)
 	local len = 0
 
-	for _, entry in ipairs(tbl) do
-		len = len + entry:len()
+	for i=s,e do
+		len = len + tbl[i]:len()
 	end
 
 	return len
 end
 
-local function incrementalHighlight(doc)
+local function incrementalHighlight(doc, row)
 	local old = doc.ts.tree
 	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
 
@@ -112,6 +102,19 @@ local function incrementalHighlight(doc)
 			doc.highlighter.lines[i] = false
 		end
 		doc.highlighter:invalidate(p.start_point.row + 1)
+	end
+
+	for n, _ in doc.ts.query:capture(doc.ts.tree:root(), {
+		row    = row - 1,
+		column = 0
+	}, {
+		row    = row - 1,
+		column = #doc.lines[row] - 1
+	}) do
+		for i = n:start_point().row + 1, n:end_point().row + 1 do
+			doc.highlighter.lines[i] = false
+		end
+		doc.highlighter:invalidate(n:start_point().row + 1)
 	end
 end
 
@@ -122,10 +125,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 	if self.treesit then
 		line, col = self:sanitize_position(line, col)
 
-		local lns = table.slice(self.lines, 1, line - 1)
-		local start = accumulateLen(lns)
-
-		local tsByte = start + col - 1
+		local tsByte = accumulateLen(self.lines, 1, line - 1) + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
 		self.ts.tree:edit_s {
@@ -136,7 +136,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 			old_end_point = { row = tsLine, column = tsCol },
 			new_end_point = { row = tsLine, column = tsCol + text:len() },
 		}
-		incrementalHighlight(self)
+		incrementalHighlight(self, line)
 	end
 end
 
@@ -157,10 +157,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 
-		local lns = table.slice(self.lines, 1, line1 - 1)
-		local start = accumulateLen(lns)
-
-		local tsByte = start + col1 - 1
+		local tsByte = accumulateLen(self.lines, 1, line1 - 1) + col1 - 1
 
 		self.ts.tree:edit_s {
 			start_byte    = tsByte,
@@ -170,7 +167,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 			old_end_point = { row = line2 - 1, column = col2 - 1 },
 			new_end_point = { row = line1 - 1, column = col1 - 1 },
 		}
-		incrementalHighlight(self)
+		incrementalHighlight(self, line1)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
@@ -243,7 +240,7 @@ function Highlight:tokenize_line(idx, state)
 	
 	return {
 		init_state = state,
-		state      = {},
+		state      = state,
 		text       = txt,
 		tokens     = toks
 	}
