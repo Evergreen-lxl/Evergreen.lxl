@@ -6,8 +6,8 @@ local M = {
 }
 
 local function localPath()
-   local str = debug.getinfo(2, 'S').source:sub(2)
-   return str:match '(.*[/\\])'
+	local str = debug.getinfo(2, 'S').source:sub(2)
+	return str:match '(.*[/\\])'
 end
 
 function M.query(ftype)
@@ -85,6 +85,26 @@ end)
 
 --- @param doc core.doc
 function M.init(doc)
+	local function getSource(n)
+		local startPt = n:start_point()
+		local endPt   = n:end_point()
+		local startRow, startCol = startPt.row + 1, startPt.column + 1
+		local endRow, endCol     = endPt.row + 1, endPt.column
+
+		if startRow == endRow then
+			return doc.lines[startRow]:sub(startCol, endCol)
+		end
+
+		local lns = {}
+		lns[1] = doc.lines[startRow]:sub(startCol)
+		for i = startRow + 1, endRow - 1 do
+			lns[#lns + 1] = doc.lines[i]
+		end
+		lns[#lns + 1] = doc.lines[endRow]:sub(1, endCol)
+
+		return table.concat(lns)
+	end
+
 	if not doc.filename then return end
 
 	local p = parser.get(languages.fromDoc(doc))

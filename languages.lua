@@ -22,6 +22,7 @@ M.extensionMappings = makeTbl {
 	'lua',
 	['jsx,js'] = 'javascript',
 	['rs'] = 'rust',
+	'zig'
 }
 
 M.filenameMappings = {
@@ -38,7 +39,8 @@ M.exts = {
 	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
 	javascript = 'https://github.com/tree-sitter/tree-sitter-javascript',
 	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
-	rust = 'https://github.com/tree-sitter/tree-sitter-rust'
+	rust = 'https://github.com/tree-sitter/tree-sitter-rust',
+	zig = 'https://github.com/maxxnino/tree-sitter-zig'
 }
 
 M.installed = {}

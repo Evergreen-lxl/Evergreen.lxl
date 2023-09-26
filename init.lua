@@ -83,27 +83,17 @@ function Doc:new(filename, abs_filename, new_file)
 	highlights.init(self)
 end
 
-function table.slice(tbl, first, last, step)
-	local sliced = {}
-
-	for i = first or 1, last or #tbl, step or 1 do
-		sliced[#sliced+1] = tbl[i]
-	end
-
-	return sliced
-end
-
-local function accumulateLen(tbl)
+local function accumulateLen(tbl, s, e)
 	local len = 0
 
-	for _, entry in ipairs(tbl) do
-		len = len + entry:len()
+	for i=s,e do
+		len = len + tbl[i]:len()
 	end
 
 	return len
 end
 
-local function incrementalHighlight(doc)
+local function incrementalHighlight(doc, row)
 	local old = doc.ts.tree
 	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
 
@@ -112,6 +102,19 @@ local function incrementalHighlight(doc)
 			doc.highlighter.lines[i] = false
 		end
 		doc.highlighter:invalidate(p.start_point.row + 1)
+	end
+
+	for n, _ in doc.ts.query:capture(doc.ts.tree:root(), {
+		row    = row - 1,
+		column = 0
+	}, {
+		row    = row - 1,
+		column = #doc.lines[row] - 1
+	}) do
+		for i = n:start_point().row + 1, n:end_point().row + 1 do
+			doc.highlighter.lines[i] = false
+		end
+		doc.highlighter:invalidate(n:start_point().row + 1)
 	end
 end
 
@@ -122,10 +125,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 	if self.treesit then
 		line, col = self:sanitize_position(line, col)
 
-		local lns = table.slice(self.lines, 1, line - 1)
-		local start = accumulateLen(lns)
-
-		local tsByte = start + col - 1
+		local tsByte = accumulateLen(self.lines, 1, line - 1) + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
 		self.ts.tree:edit_s {
@@ -136,7 +136,7 @@ function Doc:raw_insert(line, col, text, undo, time)
 			old_end_point = { row = tsLine, column = tsCol },
 			new_end_point = { row = tsLine, column = tsCol + text:len() },
 		}
-		incrementalHighlight(self)
+		incrementalHighlight(self, line)
 	end
 end
 
@@ -157,10 +157,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 
-		local lns = table.slice(self.lines, 1, line1 - 1)
-		local start = accumulateLen(lns)
-
-		local tsByte = start + col1 - 1
+		local tsByte = accumulateLen(self.lines, 1, line1 - 1) + col1 - 1
 
 		self.ts.tree:edit_s {
 			start_byte    = tsByte,
@@ -170,7 +167,7 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 			old_end_point = { row = line2 - 1, column = col2 - 1 },
 			new_end_point = { row = line1 - 1, column = col1 - 1 },
 		}
-		incrementalHighlight(self)
+		incrementalHighlight(self, line1)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
@@ -187,107 +184,66 @@ end
 local oldTokenize = Highlight.tokenize_line
 function Highlight:tokenize_line(idx, state)
 	if not self.doc.treesit then return oldTokenize(self, idx, state) end
+	
+	local txt      = self.doc.lines[idx]
+	local row      = idx - 1
+	local toks     = {}
+	local buf      = { 'normal', #txt }
+	local startBuf = 0
 
-	local function isBefore(curStart, prevEnd)
-		return
-			prevEnd.row > curStart.row or
-			(prevEnd.row == curStart.row and prevEnd.column > curStart.column)
-	end
-
-	local res = {}
-	res.init_state = state
-	res.text = self.doc.lines[idx]
-	res.state = 0
-	res.tokens = {}
-
-	local i = idx - 1
-	local tokens = res.tokens
-	local currentLine = self.doc.lines[idx]
-	local lastNode, lastName, lastStartPoint, lastEndPoint
-	for n, nName in self.doc.ts.query:capture(self.doc.ts.tree:root(), {
-		row = i,
+	for node, name in self.doc.ts.query:capture(self.doc.ts.tree:root(), {
+		row    = row,
 		column = 0
 	}, {
-		row = i,
-		column = #currentLine - 1
+		row    = row,
+		column = #txt - 1
 	}) do
-		local startPoint = n:start_point()
-		local endPoint = n:end_point()
-		if i > endPoint.row then goto continue end
-		if i < startPoint.row then break end
-		-- print(i, n, n:source(), startPoint.column + 1, endPoint.column + 1)
+		local startPt = node:start_point()
+		local endPt   = node:end_point()
 
-		if not lastNode and startPoint.column > 0 and i == startPoint.row then
-			-- first node
-			tokens[#tokens + 1] = 'normal'
-			tokens[#tokens + 1] = currentLine:sub(1, startPoint.column)
-		elseif lastNode and lastEndPoint.row == startPoint.row and startPoint.column - lastEndPoint.column > 0 then
-			tokens[#tokens + 1] = 'normal'
-			tokens[#tokens + 1] = currentLine:sub(lastEndPoint.column + 1, startPoint.column)
+		if row > endPt.row then goto continue end
+		if row < startPt.row then break end
+
+		local startPos = startPt.row < row and 1 or startPt.column + 1
+		local endPos   = endPt.row > row and #txt or endPt.column
+
+		local i = #buf - 1
+		while i >= 1 and buf[i + 1] < startPos do
+			local e = buf[i + 1]
+			toks[#toks + 1] = buf[i]
+			toks[#toks + 1] = txt:sub(startBuf, e)
+			startBuf = e + 1
+
+			buf[i], buf[i + 1] = nil, nil
+			i = i - 2
 		end
 
-		-- single line token
-		if startPoint.row == endPoint.row then
-			if lastNode and isBefore(startPoint, lastEndPoint) then
-				if lastName ~= "error" then
-					local append_idx = #tokens - 1
-					tokens[append_idx] = nName
-					tokens[append_idx + 1] = currentLine:sub(startPoint.column + 1, endPoint.column)
-				else
-					goto continue
-				end
-			else
-				local append_idx = #tokens + 1
-				tokens[append_idx] = nName
-				tokens[append_idx + 1] = currentLine:sub(startPoint.column + 1, endPoint.column)
-			end
-		elseif i >= startPoint.row and i <= endPoint.row then
-			if lastNode and lastName == "error" and isBefore(startPoint, lastEndPoint) then
-				goto continue
-			end
+		toks[#toks + 1] = buf[i]
+		toks[#toks + 1] = txt:sub(startBuf, startPos - 1)
+		startBuf = startPos
 
-			if self.lines[idx] then
-				common.splice(self.lines, idx + 1, #self.lines - 1)
-			end
-
-			tokens[#tokens + 1] = nName
-			if i == startPoint.row then
-				tokens[#tokens + 1] = currentLine:sub(startPoint.column + 1, -2) -- from node start to EOL
-			elseif i == endPoint.row then
-				tokens[#tokens + 1] = currentLine:sub(1, endPoint.column) -- from line start to end of node
-			else
-				tokens[#tokens + 1] = currentLine
-			end
-		end
-
-		if lastEndPoint and lastEndPoint.column > endPoint.column then
-			-- print("THIS IS WEIRD")
-			local prevGroup, prevSource = tokens[#tokens - 1], tokens[#tokens]
-			tokens[#tokens - 1] = 'normal'
-			tokens[#tokens] = currentLine:sub(lastStartPoint.column + 1, startPoint.column)
-			tokens[#tokens + 1] = prevGroup
-			tokens[#tokens + 1] = prevSource
-		end
-
-		lastNode = n
-		lastName = nName
-		lastStartPoint = startPoint
-		lastEndPoint = endPoint
+		buf[#buf + 1] = name
+		buf[#buf + 1] = endPos
 
 		::continue::
 	end
 
-	if lastNode and i == lastEndPoint.row then
-		tokens[#tokens+1] = 'normal'
-		tokens[#tokens+1] = currentLine:sub(lastEndPoint.column + 1)
-	end
+	local i = #buf - 1
+	for i = #buf - 1, 1, -2 do
+		local e = buf[i + 1]
+		toks[#toks + 1] = buf[i]
+		toks[#toks + 1] = txt:sub(startBuf, e)
+		startBuf = e + 1
 
-	if not lastNode then
-		tokens[#tokens+1] = 'normal'
-		tokens[#tokens+1] = currentLine
+		i = i - 2
 	end
-
-	return res
+	
+	return {
+		init_state = state,
+		state      = state,
+		text       = txt,
+		tokens     = toks
+	}
 end
 
 command.add('core.docview!', {

@@ -24,6 +24,7 @@ It is work in progress, but functions well.
 - [x] [Javascript/JSX][tree-sitter-javascript]
 - [x] [Lua][tree-sitter-lua]
 - [x] [Rust][tree-sitter-rust]
+- [x] [Zig][tree-sitter-zig]
 
 If you want more languages supported, open an issue.
 
@@ -102,7 +103,7 @@ cp ltreesitter.so ~/.config/lite-xl/ltreesitter.so
 ```
 
 Or download an appropriate release from [here](https://github.com/TorchedSammy/evergreen-builds/releases/tag/ltreesitter),
-where ltreesitter**.so** is Linux, and ltreesitter**.dll** is Windows.
+where ltreesitter.so is Linux, and ltreesitter.dll is Windows.
 
 # Usage
 To use Evergreen, you have to install the parser for your language of choice.
@@ -130,6 +131,7 @@ These are the available highlight groups:
 - `boolean`: A group to highlight booleans specifically
 - `character`
 - `comment`
+- `comment.documentation`: Doc comments
 - `conditional`: Keywords relating to conditionals (`if`/`else`)
 - `conditional.ternary`
 - `constant`
@@ -184,3 +186,5 @@ MIT
 [tree-sitter-javascript]: https://github.com/tree-sitter/tree-sitter-javascript
 [tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
 [tree-sitter-rust]: https://github.com/tree-sitter/tree-sitter-rust
+[tree-sitter-zig]: https://github.com/maxxnino/tree-sitter-zig
+
