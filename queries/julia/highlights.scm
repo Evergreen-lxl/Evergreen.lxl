@@ -176,9 +176,9 @@
 (prefixed_string_literal
   prefix: (identifier) @function.macro) @string
 
-(command_literal) @string.special
+(command_literal) @string
 (prefixed_command_literal
-  prefix: (identifier) @function.macro) @string.special
+  prefix: (identifier) @function.macro) @string
 
 [
   (line_comment)
