@@ -191,3 +191,4 @@
 ["::" "." "," "..."] @punctuation.delimiter
 ["[" "]" "(" ")" "{" "}"] @punctuation.bracket
 
+(ERROR) @error
