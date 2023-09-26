@@ -17,6 +17,7 @@ It is work in progress, but functions well.
 - [x] [C][tree-sitter-c]
 - [x] [C++][tree-sitter-cpp]
 - [ ] CSS
+- [x] [D][tree-sitter-d]
 - [x] [Diff][tree-sitter-diff]
 - [x] [Go][tree-sitter-go]
 - [x] [go.mod][tree-sitter-go-mod]
@@ -180,6 +181,7 @@ MIT
 
 [tree-sitter-c]: https://github.com/tree-sitter/tree-sitter-c
 [tree-sitter-cpp]: https://github.com/tree-sitter/tree-sitter-cpp
+[tree-sitter-d]: https://github.com/CyberShadow/tree-sitter-d
 [tree-sitter-diff]: https://github.com/the-mikedavis/tree-sitter-diff
 [tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
 [tree-sitter-go-mod]: https://github.com/camdencheek/tree-sitter-go-mod

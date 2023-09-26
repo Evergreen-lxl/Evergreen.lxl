@@ -17,6 +17,7 @@ end
 M.extensionMappings = makeTbl {
 	['c,h'] = 'c',
 	['cc,cpp,hpp'] = 'cpp',
+	'd',
 	'diff',
 	'go',
 	'lua',
@@ -34,6 +35,7 @@ M.filenameMappings = {
 M.exts = {
 	c = 'https://github.com/tree-sitter/tree-sitter-c',
 	cpp = 'https://github.com/tree-sitter/tree-sitter-cpp',
+	d = 'https://github.com/CyberShadow/tree-sitter-d',
 	diff = 'https://github.com/the-mikedavis/tree-sitter-diff',
 	go = 'https://github.com/tree-sitter/tree-sitter-go',
 	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
