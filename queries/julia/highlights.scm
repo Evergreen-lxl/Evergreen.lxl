@@ -1,4 +1,6 @@
- (identifier) @variable
+https://github.com/helix-editor/helix/blob/master/LICENSE#L358-L360
+
+(identifier) @variable
 
 (operator) @operator
 (range_expression ":" @operator)
