@@ -8,5 +8,7 @@ local M = {
 }
 
 M.parserLocation = util.join {M.dataDir, 'parsers'}
+M.queryLocation = util.join {M.dataDir, 'queries'}
 
 return M
+
