@@ -1,5 +1,6 @@
 local parser = require 'plugins.evergreen.parser'
 local languages = require 'plugins.evergreen.languages'
+local ts = require 'libraries.tree_sitter'
 
 local M = {}
 
@@ -25,8 +26,8 @@ function M.init(doc)
 	local function getSource(n)
 		local startPt = n:start_point()
 		local endPt   = n:end_point()
-		local startRow, startCol = startPt.row + 1, startPt.column + 1
-		local endRow, endCol     = endPt.row + 1, endPt.column
+		local startRow, startCol = startPt:row() + 1, startPt:column() + 1
+		local endRow, endCol     = endPt:row() + 1, endPt:column()
 
 		if startRow == endRow then
 			return doc.lines[startRow]:sub(startCol, endCol)
@@ -49,30 +50,40 @@ function M.init(doc)
 		doc.treesit = true
 		doc.ts = {
 			parser = p,
-			tree = p:parse_with(parser.input(doc.lines)),
-			query = p:query(M.query(languages.fromDoc(doc))):with {
+			tree = p:parse(nil, parser.input(doc.lines)),
+			query = ts.Query.new(p:language(), M.query(languages.fromDoc(doc))),
+			runner = ts.Query.Runner.new {
+				['eq?'] = function(t, str)
+					local src = getSource(t:one_node())
+					return src == str
+				end,
 				['any-of?'] = function(t, ...)
-					local src = getSource(t)
+					local src = getSource(t:one_node())
 					for _, match in ipairs {...} do
 						if src == match then return true end
 					end
 					return false
 				end,
+				['match?'] = function(t, pattern)
+					local src = getSource(t:one_node())
+					local res = string.match(src, pattern)
+					return res ~= nil
+				end,
 				['lua-match?'] = function(t, pattern)
-					local src = getSource(t)
+					local src = getSource(t:one_node())
 					local res = string.match(src, pattern)
 					return res ~= nil
 				end,
 				['contains?'] = function(t, search)
 					local n = t
-					local res = string.find(getSource(n), search)
+					local res = string.find(getSource(n:one_node()), search)
 					if res then return true end
 
 					while true do
 						n = n:prev_named_sibling()
 						if not n then break end
 
-						local res = string.find(getSource(n), search)
+						local res = string.find(getSource(n:one_node()), search)
 						if res then
 							return true
 						end
