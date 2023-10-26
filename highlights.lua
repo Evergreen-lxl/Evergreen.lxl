@@ -1,6 +1,6 @@
 local parser = require 'plugins.evergreen.parser'
 local languages = require 'plugins.evergreen.languages'
-local config = require 'plugisn.evergreen.config'
+local config = require 'plugins.evergreen.config'
 
 local M = {}
 
