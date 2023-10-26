@@ -66,6 +66,14 @@ local function installGrammar(options)
 				return false
 			else
 				core.log('[Evergreen] Finished installing queries for ' .. options.lang)
+				if options.extensions ~= nil then
+					for ext in options.extensions:gmatch('[^,]+') do
+						M.extensionMappings[ext] = options.lang
+					end
+				end
+				if options.filename ~= nil then
+					M.filenameMappings[options.filename] = options.lang
+				end
 				return true
 			end
 		else
@@ -127,6 +135,14 @@ local function installGrammarFromGit(options)
 				core.error('[Evergreen] An error occured while copying ' .. options.lang .. 'queries \n' .. out)
 			else
 				core.log('[Evergreen] Finished installing queries for ' .. options.lang)
+				if options.extensions ~= nil then
+					for ext in options.extensions:gmatch('[^,]+') do
+						M.extensionMappings[ext] = options.lang
+					end
+				end
+				if options.filename ~= nil then
+					M.filenameMappings[options.filename] = options.lang
+				end
 			end
 		end
 		-- rmDir(repo_path)
@@ -154,14 +170,6 @@ function M.add_grammar(options)
 			return false
 		end
 	end
-	if options.extensions ~= nil then
-		for ext in options.extensions:gmatch('[^,]+') do
-			M.extensionMappings[ext] = options.lang
-		end
-	end
-	if options.filename ~= nil then
-		M.filenameMappings[options.filename] = options.lang
-	end
 	local lib = util.join { config.parserLocation, options.lang, "parser.so" }
 
 	if not exists(lib) then
@@ -176,7 +184,17 @@ function M.add_grammar(options)
 		else
 			core.error("[Evergreen] nor path or git defined for " .. options.lang)
 		end
+	else
+		if options.extensions ~= nil then
+			for ext in options.extensions:gmatch('[^,]+') do
+				M.extensionMappings[ext] = options.lang
+			end
+		end
+		if options.filename ~= nil then
+			M.filenameMappings[options.filename] = options.lang
+		end
 	end
+
 	return true
 end
 
