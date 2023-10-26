@@ -1,53 +1,154 @@
+local core = require "core"
+
+local util = require 'plugins.evergreen.util'
+local config = require 'plugins.evergreen.config'
+
 local M = {}
 
-local function makeTbl(tbl)
-	local t = {}
-	for exts, ftype in pairs(tbl) do
-		if type(exts) == 'number' then
-			t[ftype] = ftype
-		else
-			for ext in exts:gmatch('[^,]+') do
-				t[ext] = ftype
-			end
-		end
-	end
-	return t
+M.grammars = {}
+M.extensionMappings = {}
+M.filenameMappings = {}
+
+
+local function exists(path)
+   local f=system.get_file_info(path)
+   if f~=nil then return f.type == "file" else return false
 end
 
-M.extensionMappings = makeTbl {
-	['c,h'] = 'c',
-	['cc,cpp,hpp'] = 'cpp',
-	'd',
-	'diff',
-	'go',
-	'lua',
-	['jsx,js'] = 'javascript',
-	['jl'] = 'julia',
-	['rs'] = 'rust',
-	'zig'
-}
+local function isDir(name)
+  local f=system.get_file_info(path)
+   if f~=nil then return f.type == "dir" else return false
+end
 
-M.filenameMappings = {
-	['go.mod'] = 'gomod'
-}
+local function exec(cmd, opts)
+	local proc = process.start(cmd, opts or {})
+	if proc then
+		while proc:running() do
+			coroutine.yield(0.1)
+		end
+		return (proc:read_stdout() or '<no stdout>\n') .. (proc:read_stderr() or '<no stderr>'), proc:returncode()
+	end
+	return nil
+end
 
--- lists of valid/supported language extensions
--- with their intended parser
-M.exts = {
-	c = 'https://github.com/tree-sitter/tree-sitter-c',
-	cpp = 'https://github.com/tree-sitter/tree-sitter-cpp',
-	d = 'https://github.com/CyberShadow/tree-sitter-d',
-	diff = 'https://github.com/the-mikedavis/tree-sitter-diff',
-	go = 'https://github.com/tree-sitter/tree-sitter-go',
-	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
-	javascript = 'https://github.com/tree-sitter/tree-sitter-javascript',
-	julia = 'https://github.com/tree-sitter/tree-sitter-julia',
-	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
-	rust = 'https://github.com/tree-sitter/tree-sitter-rust',
-	zig = 'https://github.com/maxxnino/tree-sitter-zig'
-}
+local function compileParser(lang, path, dest)
+	do
+		local out, exitCode = exec(PLATFORM == 'Windows' and
+		{'cmd', '/c', 'gcc -o ' .. util.join {dest, 'parser.so'} .. ' -shared src\\*.c -Os -I.\\src -fPIC'} or
+		{'sh', '-c', 'gcc -o ' .. util.join {dest, 'parser.so'} .. ' -shared src/*.c -Os -I./src -fPIC'}, {cwd = path})
+		if exitCode ~= 0 then
+			core.error('[Evergreen] An error occured while attempting to compile the parser\n' .. out)
+			return false
+		else
+			core.log('[Evergreen] Finished installing parser for ' .. lang)
+			return true
+		end
+	end
+end
 
-M.installed = {}
+function M.add_grammar(options)
+	local required_filed = {
+		"path", 
+		"lang",
+		"extensions", 
+		"query",
+	}
+	for _, field in pairs(required_fields) do
+    if not options[field] then
+      core.error(
+        "[Evergreen] You need to provide a '%s' field for the grammar.",
+        field
+      )
+      return false
+    end
+  end
+	for ext in options.extensions:gmatch('[^,]+') do
+		M.extensionMappings[ext] = options.lang
+	end
+	local path = util.join {config.parserLocation, options.lang}
+	local lib = uitl.join {path, "parser.so"}
+
+	if not exists(lib) then 
+		if isDir(options.path) then 
+			system.mkdir(path) -- ignore output
+			if compileParser(options.lang, options.path, path) then
+				local queryPath = util.join {config.queryLocation, options.lang}
+				lfs.mkdir(queryPath)
+				local out, exitCode = exec(PLATFORM == 'Windows' and
+						{'cmd', '/c', 'cp ' .. util.join {options.query, '*.scm'} .. ' ' .. queryPath } or
+						{'sh', '-c',  'cp ' .. util.join {options.query, '*.scm'} .. ' ' .. queryPath }, {cwd = path})
+				if exitCode ~= 0 then
+					core.error('[Evergreen] An error occured while copying ' .. options.lang .. 'queries \n' .. out)
+					return false
+				else
+					core.log('[Evergreen] Finished installing queries for ' .. lang)
+					return true
+				end
+			else
+				return false
+			end 
+		else 
+			core.error(
+				"[Evergreen] impossible to install '%s' grammar as '%s' path does not exists.",
+				options.lang,
+				options.path
+			)
+			return false 
+		end
+	end
+	return true
+end
+
+function M.add_filespec_grammar(options)
+	local required_filed = {
+		"path", 
+		"lang",
+		"filename", 
+		"query",
+	}
+	for _, field in pairs(required_fields) do
+    if not options[field] then
+      core.error(
+        "[Evergreen] You need to provide a '%s' field for the grammar.",
+        field
+      )
+      return false
+    end
+  end
+  M.filenameMappings[options.filename] = options.lang
+	local path = util.join {config.parserLocation, options.lang}
+	local lib = uitl.join {path, "parser.so"}
+
+	if not exists(lib) then 
+		if isDir(options.path) then 
+			system.mkdir(path) -- ignore output
+			if compileParser(options.lang, options.path, path) then
+				local queryPath = util.join {config.queryLocation, options.lang}
+				lfs.mkdir(queryPath)
+				local out, exitCode = exec(PLATFORM == 'Windows' and
+						{'cmd', '/c', 'cp ' .. util.join {options.query, '*.scm'} .. ' ' .. queryPath } or
+						{'sh', '-c',  'cp ' .. util.join {options.query, '*.scm'} .. ' ' .. queryPath }, {cwd = path})
+				if exitCode ~= 0 then
+					core.error('[Evergreen] An error occured while copying ' .. options.lang .. 'queries \n' .. out)
+					return false
+				else
+					core.log('[Evergreen] Finished installing queries for ' .. lang)
+					return true
+				end
+			else
+				return false
+			end 
+		else 
+			core.error(
+				"[Evergreen] impossible to install '%s' grammar as '%s' path does not exists.",
+				options.lang,
+				options.path
+			)
+			return false 
+		end
+	end
+	return true
+end
 
 --- @param doc core.doc
 function M.fromDoc(doc)
@@ -65,3 +166,4 @@ function M.fromDoc(doc)
 end
 
 return M
+
