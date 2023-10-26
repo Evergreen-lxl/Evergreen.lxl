@@ -56,6 +56,8 @@ langs.add_grammar {
 ## Example 
 
 ```lua
+local languages = require "plugins.evergreen.languages"
+
 languages.add_grammar {
   path = "~/.grammars/tree-sitter-epics/epics-db",
   lang = "epics_db",
