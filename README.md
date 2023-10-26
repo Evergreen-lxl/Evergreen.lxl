@@ -14,21 +14,67 @@ It is work in progress, but functions well.
 | ![](before.png)                                |                                 ![](after.png) |
 
 # Supported Languages
-- [x] [C][tree-sitter-c]
-- [x] [C++][tree-sitter-cpp]
-- [ ] CSS
-- [x] [D][tree-sitter-d]
-- [x] [Diff][tree-sitter-diff]
-- [x] [Go][tree-sitter-go]
-- [x] [go.mod][tree-sitter-go-mod]
-- [ ] HTML
-- [x] [Javascript/JSX][tree-sitter-javascript]
-- [x] [Julia][tree-sitter-julia]
-- [x] [Lua][tree-sitter-lua]
-- [x] [Rust][tree-sitter-rust]
-- [x] [Zig][tree-sitter-zig]
 
-If you want more languages supported, open an issue.
+Any language supported by `tree-sitter` should (in theory) be supported as well.
+
+It is possible to use grammar installed locally or directly from their git repository. Additionally 
+it is possible to specify where to find the queries of the language as well as use sub path for projects
+containing more then one language.
+
+## Locally installed grammars
+
+To add a grammar to lite-xl simply add the following configuration to your `init.lua` script:
+
+```lua
+local langs = require "plugins.evergreen.languages"
+
+langs.add_grammar {
+  path = "YOUR GRAMMAR LOCAL PATH",
+  lang = "LANGUAGE NAME",
+  extensions = "FILE EXTENSIONS", -- optional for extension name based
+  filename = "FILE NAME", -- optional for file name based 
+  queries = "QUERIES SUB PATH", -- optional sub path of grammar queries, default = 'queries'
+}
+```
+
+## From git repository 
+To add a grammar directly from a git repository add this to your `init.lua` scripts:
+
+```lua
+local langs = require "plugins.evergreen.languages"
+langs.add_grammar {
+  git = "GIT REPO",
+  lang = "LANGUAGE NAME",
+  extensions = "FILE EXTENSIONS", -- optional for extension name based
+  filename = "FILE NAME", -- optional for file name based 
+  queries = "QUERIES SUB PATH", -- optional sub path of grammar queries, default = 'queries'
+  subpath = "GRAMMAR SUB PATH", -- optional sub path if grammar is nested, default = nil
+  revision = "SPECIFIC GIT REVISION", -- optional version of the code to clone
+}
+```
+
+## Example 
+
+```lua
+languages.add_grammar {
+  path = "~/.grammars/tree-sitter-epics/epics-db",
+  lang = "epics_db",
+  extensions = "db,vdb",
+}
+
+languages.add_grammar {
+  git = "https://github.com/tree-sitter/tree-sitter-cpp.git",
+  lang = "cpp",
+  extensions = "cpp,hpp,cc",
+}
+
+languages.add_grammar {
+  git = "https://github.com/tree-sitter/tree-sitter-c.git",
+  lang = "c",
+  extensions = "c,h",
+}
+
+```
 
 # Requirements
 - Lite XL 2.1+ or [Pragtical](https://github.com/pragtical/pragtical)
