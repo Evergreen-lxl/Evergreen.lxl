@@ -72,7 +72,6 @@ local Highlight = require 'core.doc.highlighter'
 local parser = require 'plugins.evergreen.parser'
 local highlights = require 'plugins.evergreen.highlights'
 require 'plugins.evergreen.style'
-require 'plugins.evergreen.installer'
 
 --- @class core.doc
 --- @field treesit boolean
