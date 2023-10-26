@@ -1,5 +1,6 @@
 local parser = require 'plugins.evergreen.parser'
 local languages = require 'plugins.evergreen.languages'
+local config = require 'plugisn.evergreen.config'
 
 local M = {}
 
@@ -9,7 +10,7 @@ local function localPath()
 end
 
 function M.query(ftype)
-	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ftype))
+	local ff = io.open(string.format('%s/%s/highlights.scm', config.queryLocation, ftype))
 	if not ff then
 		return ""
 	end
@@ -86,3 +87,4 @@ function M.init(doc)
 end
 
 return M
+
