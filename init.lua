@@ -11,6 +11,7 @@ end
 
 system.mkdir(config.dataDir)
 system.mkdir(config.parserLocation)
+system.mkdir(config.queryLocation)
 
 appendPaths {
 	util.join {config.dataDir, '?' .. util.soname},
@@ -255,3 +256,4 @@ command.add('core.docview!', {
 		end
 	end
 })
+
