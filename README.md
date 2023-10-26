@@ -39,7 +39,7 @@ If you want more languages supported, open an issue.
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
-{'TorchedSammy/Evergreen.lxl'},
+{'TorchedSammy/Evergreen.lxl'}
 ```
 
 ## Manually
