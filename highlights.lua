@@ -4,10 +4,6 @@ local config = require 'plugins.evergreen.config'
 
 local M = {}
 
-local function localPath()
-	local str = debug.getinfo(2, 'S').source:sub(2)
-	return str:match '(.*[/\\])'
-end
 
 function M.query(ftype)
 	local ff = io.open(string.format('%s/%s/highlights.scm', config.queryLocation, ftype))
