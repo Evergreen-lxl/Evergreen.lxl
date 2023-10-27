@@ -3,6 +3,32 @@ local core = require "core"
 local util = require 'plugins.evergreen.util'
 local languages = require 'plugins.evergreen.languages'
 
+-- defualts grammar configuration
+local defaults = {
+  c = {
+    extensions = 'c,h'
+  },
+  cpp = {
+    extensions = 'cpp,cc,hpp'
+  },
+  d = {},
+  diff = {},
+  gomod = {
+    filename = 'go.mod'
+  },
+  lua = {},
+  javascript = {
+    extensions = 'jsx,js'
+  },
+  julia = {
+    extensions = 'jl'
+  },
+  rust = {
+    extensions = 'rs'
+  },
+  zig = {}
+}
+
 -- check if file exists
 local function exists(path)
   local f = system.get_file_info(path)
@@ -71,24 +97,40 @@ local function mapGrammar(options)
       languages.filenameMappings[name] = options.lang
     end
   end
+  if options.filename == nil and options.extensions == nil then
+    languages.extensionMappings[options.lang] = options.lang
+  end
 end
 
-local function installGrammar(options, config)
+local function installQueries(path, options, config)
+  local queryPath = util.join { config.queryLocation, options.lang }
+  system.mkdir(queryPath)
+  local queries = "queries"
+  if options.queries ~= nil then
+    local defQueries = util.join { util.localPath(), 'queries', options.lang }
+    if isDir(defQueries) then
+      queries = defQueries
+    else
+      queries = util.join { path, options.queries }
+    end
+  else
+    queries = util.join { path, options.queries }
+  end
+  if copyQueries(queries, queryPath) then
+    core.log('[Evergreen] Finished installing queries for ' .. options.lang)
+    mapGrammar(options)
+    return true
+  end
+  rmDir(queryPath)
+  return false
+end
+
+local function installGrammarFromPath(options, config)
   local path = util.join { config.parserLocation, options.lang }
   if isDir(options.path) then
-    system.mkdir(path) -- ignore output
+    system.mkdir(path)
     if compileParser(options.lang, options.path, path) then
-      local queryPath = util.join { config.queryLocation, options.lang }
-      system.mkdir(queryPath)
-      local queries = "queries"
-      if options.queries ~= nil then
-        queries = options.queries
-      end
-      if copyQueries(util.join { options.path, queries }, queryPath) then
-        core.log('[Evergreen] Finished installing queries for ' .. options.lang)
-        mapGrammar(options)
-      end
-      return true;
+      return installQueries(options.path, options, config)
     end
   else
     core.error(
@@ -118,26 +160,14 @@ local function installGrammarFromGit(options, config)
 
   local path = util.join { config.parserLocation, options.lang }
   if isDir(repo_path) then
-    system.mkdir(path) -- ignore output
+    system.mkdir(path)
     if options.subpath ~= nil then
       repo_path = util.join { repo_path, options.subpath }
     end
     if compileParser(options.lang, repo_path, path) then
-      local queryPath = util.join { config.queryLocation, options.lang }
-      system.mkdir(queryPath)
-      local queries = "queries"
-      if options.queries ~= nil then
-        queries = options.queries
-      end
-      if copyQueries(util.join { repo_path, queries }, queryPath) then
-        core.log('[Evergreen] Finished installing queries for ' .. options.lang)
-        mapGrammar(options)
-      end
+      local ok = installQueries(repo_path, options, config)
       rmDir(repo_path)
-      return true
-    else
-      rmDir(repo_path)
-      return false
+      return ok
     end
   else
     core.error(
@@ -147,6 +177,44 @@ local function installGrammarFromGit(options, config)
     )
   end
   return false
+end
+
+local function installGrammarFromURL(options, config)
+  local path = util.join { config.parserLocation, options.lang }
+  system.mkdir(path)
+  local out, exitCode
+  if PLATFORM == 'Windows' then
+    out, exitCode = exec({ 'powershell', '-Command',
+      string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', path, options.url) })
+  else
+    out, exitCode = exec({ 'curl', '-L', '--create-dirs', '--output-dir', path, '--fail', options.url, '-o',
+      'parser' .. util.soname })
+  end
+
+  if exitCode ~= 0 then
+    core.error('[Evergreen] An error occured while attempting to download the parser for language %s\n%s', options.lang,
+      out)
+  else
+    installQueries(path, options, config)
+  end
+end
+
+local function installGrammar(options, config)
+  if options.url ~= nil then
+    core.add_thread(function()
+      installGrammarFromURL(options, config)
+    end)
+  elseif options.git ~= nil then
+    core.add_thread(function()
+      installGrammarFromGit(options, config)
+    end)
+  elseif options.path ~= nil then
+    core.add_thread(function()
+      installGrammarFromPath(options, config)
+    end)
+  else
+    core.error('[Evergreen] No installation method defined for lanuage %s.', config.lang)
+  end
 end
 
 local M = {}
@@ -171,12 +239,22 @@ function M.addGrammar(options, config)
       core.add_thread(function()
         installGrammarFromGit(options, config)
       end)
-    elseif options.path ~= nil then
-      core.add_thread(function()
-        installGrammar(options, config)
-      end)
+    elseif options.path ~= nil or options.url ~= nil then
+      installGrammar(options, config)
+    elseif defaults[options.lang] ~= nil then
+      local default = defaults[options.lang]
+      options.url =
+          string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/parsers/tree-sitter-%s%s',
+            options.lang, util.soname)
+      if options.extensions == nil and default.extensions ~= nil then
+        options.extensions = default.extensions
+      end
+      if options.filename == nil and default.filename ~= nil then
+        options.filename = default.filename
+      end
+      installGrammar(options, config)
     else
-      core.error("[Evergreen] nor path or git defined for " .. options.lang)
+      core.error("[Evergreen] nor installation mode defined for language %s.", options.lang)
     end
   else
     mapGrammar(options)
