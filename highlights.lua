@@ -20,8 +20,8 @@ end
 --- @param doc core.doc
 function M.init(doc)
 	local function getSource(n)
-		local startPt = n:start_point()
-		local endPt   = n:end_point()
+		local startPt            = n:start_point()
+		local endPt              = n:end_point()
 		local startRow, startCol = startPt.row + 1, startPt.column + 1
 		local endRow, endCol     = endPt.row + 1, endPt.column
 
@@ -50,7 +50,7 @@ function M.init(doc)
 			query = p:query(M.query(languages.fromDoc(doc))):with {
 				['any-of?'] = function(t, ...)
 					local src = getSource(t)
-					for _, match in ipairs {...} do
+					for _, match in ipairs { ... } do
 						if src == match then return true end
 					end
 					return false
@@ -83,4 +83,3 @@ function M.init(doc)
 end
 
 return M
-
