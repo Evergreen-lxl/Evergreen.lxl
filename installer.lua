@@ -106,7 +106,7 @@ local function installQueries(path, options, config)
   local queryPath = util.join { config.queryLocation, options.lang }
   system.mkdir(queryPath)
   local queries = "queries"
-  if options.queries ~= nil then
+  if options.queries == nil then
     local defQueries = util.join { util.localPath(), 'queries', options.lang }
     if isDir(defQueries) then
       queries = defQueries
@@ -116,6 +116,7 @@ local function installQueries(path, options, config)
   else
     queries = util.join { path, options.queries }
   end
+  core.log('[Evergreen] installing queries for language %s from %s to %s', options.lang, queries, queryPath)
   if copyQueries(queries, queryPath) then
     core.log('[Evergreen] Finished installing queries for ' .. options.lang)
     mapGrammar(options)
@@ -126,6 +127,7 @@ local function installQueries(path, options, config)
 end
 
 local function installGrammarFromPath(options, config)
+  core.log('[Evergreen] installing parser for languange %s from local path: %s.', options.lang, options.path)
   local path = util.join { config.parserLocation, options.lang }
   if isDir(options.path) then
     system.mkdir(path)
@@ -144,6 +146,7 @@ end
 
 
 local function installGrammarFromGit(options, config)
+  core.log('[Evergreen] installing parser for languange %s from git repository: %s.', options.lang, options.git)
   local tmp_path = util.join { config.dataDir, "temp" }
   system.mkdir(tmp_path)
   local repo_path = util.join { tmp_path, options.lang }
@@ -181,6 +184,7 @@ end
 
 local function installGrammarFromURL(options, config)
   local path = util.join { config.parserLocation, options.lang }
+  core.log('[Evergreen] installing parser for languange %s from  url: %s.', options.lang, options.url)
   system.mkdir(path)
   local out, exitCode
   if PLATFORM == 'Windows' then
