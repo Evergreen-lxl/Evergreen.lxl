@@ -29,17 +29,6 @@ local defaults = {
   zig = {}
 }
 
--- check if file exists
-local function exists(path)
-  local f = system.get_file_info(path)
-  if f ~= nil then return f.type == "file" else return false end
-end
-
--- check if path is a directory or not
-local function isDir(path)
-  local f = system.get_file_info(path)
-  if f ~= nil then return f.type == "dir" else return false end
-end
 
 -- execute proecess
 local function exec(cmd, opts)
@@ -108,7 +97,7 @@ local function installQueries(path, options, config)
   local queries = "queries"
   if options.queries == nil then
     local defQueries = util.join { util.localPath(), 'queries', options.lang }
-    if isDir(defQueries) then
+    if util.isDir(defQueries) then
       queries = defQueries
     else
       queries = util.join { path, options.queries }
@@ -129,7 +118,7 @@ end
 local function installGrammarFromPath(options, config)
   core.log('[Evergreen] installing parser for languange %s from local path: %s.', options.lang, options.path)
   local path = util.join { config.parserLocation, options.lang }
-  if isDir(options.path) then
+  if util.isDir(options.path) then
     system.mkdir(path)
     if compileParser(options.lang, options.path, path) then
       return installQueries(options.path, options, config)
@@ -150,7 +139,7 @@ local function installGrammarFromGit(options, config)
   local tmp_path = util.join { config.dataDir, "temp" }
   system.mkdir(tmp_path)
   local repo_path = util.join { tmp_path, options.lang }
-  if isDir(repo_path) then
+  if util.isDir(repo_path) then
     core.log("[Evergreen] " .. repo_path .. " exists")
     return true
   end
@@ -162,7 +151,7 @@ local function installGrammarFromGit(options, config)
   end
 
   local path = util.join { config.parserLocation, options.lang }
-  if isDir(repo_path) then
+  if util.isDir(repo_path) then
     system.mkdir(path)
     if options.subpath ~= nil then
       repo_path = util.join { repo_path, options.subpath }
@@ -236,9 +225,10 @@ function M.addGrammar(options, config)
       return false
     end
   end
+  languages.grammars[options.lang] = options
   local lib = util.join { config.parserLocation, options.lang, "parser.so" }
-
-  if not exists(lib) then
+  local queries = util.join {config.queryLocation, options.lang, "highlights.scm"}
+  if not util.exists(lib) or not util.exists(queries) then
     if options.git ~= nil then
       core.add_thread(function()
         installGrammarFromGit(options, config)
