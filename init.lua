@@ -14,9 +14,9 @@ system.mkdir(config.parserLocation)
 system.mkdir(config.queryLocation)
 
 appendPaths {
-	util.join {config.dataDir, '?' .. util.soname},
-	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. util.soname},
-	util.join {config.parserLocation, '?', 'parser' .. util.soname},
+	util.join { config.dataDir, '?' .. util.soname },
+	util.join { config.parserLocation, '?', 'libtree-sitter-?' .. util.soname },
+	util.join { config.parserLocation, '?', 'parser' .. util.soname },
 }
 
 if PLATFORM ~= 'Windows' then
@@ -45,13 +45,17 @@ core.log('%s', ok)
 if not ok then
 	core.add_thread(function()
 		core.log 'Could not require ltreesitter, attempting to install...'
-		local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
+		local url = string.format(
+		'https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
 
 		local out, exitCode
 		if PLATFORM == 'Windows' then
-			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', util.join {config.dataDir, 'ltreesitter' .. util.soname}, url)})
+			out, exitCode = exec({ 'powershell', '-Command',
+				string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s',
+					util.join { config.dataDir, 'ltreesitter' .. util.soname }, url) })
 		else
-			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter' .. util.soname})
+			out, exitCode = exec({ 'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o',
+				'ltreesitter' .. util.soname })
 		end
 		if exitCode ~= 0 then
 			core.error('An error occured while attempting to download ltreesitter\n%s', out)
@@ -86,7 +90,7 @@ end
 local function accumulateLen(tbl, s, e)
 	local len = 0
 
-	for i=s,e do
+	for i = s, e do
 		len = len + tbl[i]:len()
 	end
 
@@ -184,7 +188,7 @@ end
 local oldTokenize = Highlight.tokenize_line
 function Highlight:tokenize_line(idx, state)
 	if not self.doc.treesit then return oldTokenize(self, idx, state) end
-	
+
 	local txt      = self.doc.lines[idx]
 	local row      = idx - 1
 	local toks     = {}
@@ -207,7 +211,7 @@ function Highlight:tokenize_line(idx, state)
 		local startPos = startPt.row < row and 1 or startPt.column + 1
 		local endPos   = endPt.row > row and #txt or endPt.column
 
-		local i = #buf - 1
+		local i        = #buf - 1
 		while i >= 1 and buf[i + 1] < startPos do
 			local e = buf[i + 1]
 			toks[#toks + 1] = buf[i]
@@ -237,7 +241,7 @@ function Highlight:tokenize_line(idx, state)
 
 		i = i - 2
 	end
-	
+
 	return {
 		init_state = state,
 		state      = state,
@@ -255,4 +259,3 @@ command.add('core.docview!', {
 		end
 	end
 })
-
