@@ -20,15 +20,43 @@ Any language supported by `tree-sitter` should (in theory) be supported as well.
 It is possible to use grammar installed locally or directly from their git repository. Additionally 
 it is possible to specify where to find the queries of the language as well as use sub path for projects
 containing more then one language.
+## Default grammars
+
+A few grammars have default configurations, pre-compiled parsers and custom queries:
+
+The supported languages are:
+ 
+- [C][tree-sitter-c]
+- [C++][tree-sitter-cpp]
+- [D][tree-sitter-d]
+- [Diff][tree-sitter-diff]
+- [Go][tree-sitter-go]
+- [go.mod][tree-sitter-go-mod]
+- [Javascript/JSX][tree-sitter-javascript]
+- [Julia][tree-sitter-julia]
+- [Lua][tree-sitter-lua]
+- [Rust][tree-sitter-rust]
+- [Zig][tree-sitter-zig]
+
+To use any of this grammars simply add this to your conifg 
+
+```lua
+local egconfig = require "plugins.evergreen.config"
+
+egconfig.addGrammar {
+  lang = "LANGUAGE"
+}
+```
+
 
 ## Locally installed grammars
 
 To add a grammar to lite-xl simply add the following configuration to your `init.lua` script:
 
 ```lua
-local langs = require "plugins.evergreen.languages"
+local egconfig = require "plugins.evergreen.config"
 
-langs.add_grammar {
+egconfig.addGrammar {
   path = "YOUR GRAMMAR LOCAL PATH",
   lang = "LANGUAGE NAME",
   extensions = "FILE EXTENSIONS", -- optional for extension name based
@@ -41,8 +69,8 @@ langs.add_grammar {
 To add a grammar directly from a git repository add this to your `init.lua` scripts:
 
 ```lua
-local langs = require "plugins.evergreen.languages"
-langs.add_grammar {
+local egconfig = require "plugins.evergreen.config"
+egconfig.add_grammar {
   git = "GIT REPO",
   lang = "LANGUAGE NAME",
   extensions = "FILE EXTENSIONS", -- optional for extension name based
