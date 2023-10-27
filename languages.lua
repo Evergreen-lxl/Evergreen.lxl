@@ -1,4 +1,3 @@
-
 local M = {}
 
 -- map grammars to file extensions
