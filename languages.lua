@@ -4,6 +4,8 @@ local M = {}
 M.extensionMappings = {}
 -- map grammars to specific file names
 M.filenameMappings = {}
+-- map of grammar configured
+M.grammars = {}
 
 --- @param doc core.doc
 function M.fromDoc(doc)
