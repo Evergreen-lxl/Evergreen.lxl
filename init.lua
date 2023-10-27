@@ -3,6 +3,8 @@ local core = require 'core'
 local config = require 'plugins.evergreen.config'
 local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
+local languages = require 'plugins.evergreen.languages'
+
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
 		package.cpath = package.cpath .. ';' .. path:gsub('~', home)
@@ -46,7 +48,7 @@ if not ok then
 	core.add_thread(function()
 		core.log 'Could not require ltreesitter, attempting to install...'
 		local url = string.format(
-		'https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
+			'https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
 
 		local out, exitCode
 		if PLATFORM == 'Windows' then
@@ -256,6 +258,38 @@ command.add('core.docview!', {
 		if dv.doc.ts then
 			dv.doc.treesit = not dv.doc.treesit
 			dv.doc.highlighter:reset()
+		end
+	end
+})
+
+command.add(nil, {
+	['evergreen:status'] = function()
+		local notInstalled = {}
+		local installed = {}
+		local errorCounter = 0
+		for lang, options in pairs(languages.grammars) do
+			local lib = util.join { config.parserLocation, lang, "parser.so" }
+			local queries = util.join { config.queryLocation, lang, "highlights.scm" }
+			if not util.exists(lib) or not util.exists(queries) then
+				errorCounter = errorCounter + 1
+				table.insert(notInstalled, lang)
+			else
+				local str = " - " .. lang .. ": "
+				if options.extensions ~= nil then
+					str = str .. options.extensions .. " "
+				end
+				if options.filename ~= nil then
+					str = str .. options.filename .. " "
+				end
+				if options.filename == nil and options.extensions == nil then
+					str = str .. lang
+				end
+				table.insert(installed, str)
+			end
+		end
+		core.log("[Evergreen] Installed grammars:\n%s", table.concat(installed, "\n"))
+		if errorCounter > 0 then
+			core.warn("[Evergreen] grammars not operational:\n%s", table.concat(notInstalled, "\n"))
 		end
 	end
 })
