@@ -1,4 +1,4 @@
-local core = require "core"
+local core = require 'core'
 
 local util = require 'plugins.evergreen.util'
 local languages = require 'plugins.evergreen.languages'
@@ -94,7 +94,7 @@ end
 local function installQueries(path, options, config)
   local queryPath = util.join { config.queryLocation, options.lang }
   system.mkdir(queryPath)
-  local queries = "queries"
+  local queries = 'queries'
   if options.queries == nil then
     local defQueries = util.join { util.localPath(), 'queries', options.lang }
     if util.isDir(defQueries) then
@@ -125,7 +125,7 @@ local function installGrammarFromPath(options, config)
     end
   else
     core.error(
-      "[Evergreen] impossible to install '%s' grammar as '%s' path does not exists.",
+     '[Evergreen] impossible to install "%s" grammar as path "%s" does not exists.',
       options.lang,
       options.path
     )
@@ -136,18 +136,18 @@ end
 
 local function installGrammarFromGit(options, config)
   core.log('[Evergreen] installing parser for languange %s from git repository: %s.', options.lang, options.git)
-  local tmp_path = util.join { config.dataDir, "temp" }
+  local tmp_path = util.join { config.dataDir, 'temp' }
   system.mkdir(tmp_path)
   local repo_path = util.join { tmp_path, options.lang }
   if util.isDir(repo_path) then
-    core.log("[Evergreen] " .. repo_path .. " exists")
+    core.log('[Evergreen] repository path "%s" exists', repo_path)
     return true
   end
   core.log('[Evergreen] cloning ' .. options.git .. ' in ' .. repo_path)
-  exec({ "git", "clone", options.git, options.lang }, { cwd = tmp_path })
+  exec({ 'git', 'clone', options.git, options.lang }, { cwd = tmp_path })
   if options.rev ~= nil then
     core.log('[Evergreen] checkout revision ' .. options.rev)
-    exec({ "git", "checkout", options.rev }, { cwd = repo_path })
+    exec({ 'git', 'checkout', options.rev }, { cwd = repo_path })
   end
 
   local path = util.join { config.parserLocation, options.lang }
@@ -163,7 +163,7 @@ local function installGrammarFromGit(options, config)
     end
   else
     core.error(
-      "[Evergreen] impossible to install '%s' grammar as '%s' path does not exists.",
+      '[Evergreen] impossible to install "%s" grammar as "%s" path does not exists.',
       options.lang,
       options.git
     )
@@ -214,20 +214,20 @@ local M = {}
 
 function M.addGrammar(options, config)
   local required_fields = {
-    "lang",
+    'lang',
   }
   for _, field in pairs(required_fields) do
     if not options[field] then
       core.error(
-        "[Evergreen] You need to provide a '%s' field for the grammar.",
+        '[Evergreen] You need to provide a '%s' field for the grammar.',
         field
       )
       return false
     end
   end
   languages.grammars[options.lang] = options
-  local lib = util.join { config.parserLocation, options.lang, "parser.so" }
-  local queries = util.join {config.queryLocation, options.lang, "highlights.scm"}
+  local lib = util.join { config.parserLocation, options.lang, 'parser.so'}
+  local queries = util.join {config.queryLocation, options.lang, 'highlights.scm'}
   if not util.exists(lib) or not util.exists(queries) then
     if options.git ~= nil then
       core.add_thread(function()
@@ -248,7 +248,7 @@ function M.addGrammar(options, config)
       end
       installGrammar(options, config)
     else
-      core.error("[Evergreen] nor installation mode defined for language %s.", options.lang)
+      core.error('[Evergreen] nor installation mode defined for language %s.', options.lang)
     end
   else
     mapGrammar(options)

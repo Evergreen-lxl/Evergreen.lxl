@@ -268,18 +268,18 @@ command.add(nil, {
 		local installed = {}
 		local errorCounter = 0
 		for lang, options in pairs(languages.grammars) do
-			local lib = util.join { config.parserLocation, lang, "parser.so" }
-			local queries = util.join { config.queryLocation, lang, "highlights.scm" }
+			local lib = util.join { config.parserLocation, lang, 'parser.so' }
+			local queries = util.join { config.queryLocation, lang, 'highlights.scm' }
 			if not util.exists(lib) or not util.exists(queries) then
 				errorCounter = errorCounter + 1
 				table.insert(notInstalled, lang)
 			else
-				local str = " - " .. lang .. ": "
+				local str = ' - ' .. lang .. ': '
 				if options.extensions ~= nil then
-					str = str .. options.extensions .. " "
+					str = str .. options.extensions .. ' '
 				end
 				if options.filename ~= nil then
-					str = str .. options.filename .. " "
+					str = str .. options.filename .. ' '
 				end
 				if options.filename == nil and options.extensions == nil then
 					str = str .. lang
@@ -287,9 +287,9 @@ command.add(nil, {
 				table.insert(installed, str)
 			end
 		end
-		core.log("[Evergreen] Installed grammars:\n%s", table.concat(installed, "\n"))
+		core.log('[Evergreen] Installed grammars:\n%s', table.concat(installed, '\n'))
 		if errorCounter > 0 then
-			core.warn("[Evergreen] grammars not operational:\n%s", table.concat(notInstalled, "\n"))
+			core.warn('[Evergreen] grammars not operational:\n%s', table.concat(notInstalled, '\n'))
 		end
 	end
 })

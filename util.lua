@@ -22,13 +22,13 @@ end
 -- check if file exists
 function M.exists(path)
 	local f = system.get_file_info(path)
-	if f ~= nil then return f.type == "file" else return false end
+	if f ~= nil then return f.type == 'file' else return false end
 end
 
 -- check if path is a directory or not
 function M.isDir(path)
 	local f = system.get_file_info(path)
-	if f ~= nil then return f.type == "dir" else return false end
+	if f ~= nil then return f.type == 'dir' else return false end
 end
 
 return M
