@@ -1,0 +1,6 @@
+[wrap-git]
+url = https://github.com/euclidianAce/ltreesitter
+revision = head
+depth = 1
+patch_directory = ltreesitter
+clone-recursive = true

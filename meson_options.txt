@@ -1,0 +1,3 @@
+option('data_dir', type : 'string', value : '/', description: 'Data directory of installation')
+option('use_system_lua', type : 'boolean', value : true, description: 'Prefer System Lua over the meson wrap')
+option('jit', type : 'boolean', value : true, description: 'Use luajit')

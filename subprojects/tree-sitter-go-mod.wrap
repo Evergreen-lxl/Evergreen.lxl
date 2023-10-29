@@ -1,0 +1,5 @@
+[wrap-git]
+url = https://github.com/camdencheek/tree-sitter-go-mod
+revision = head
+depth = 1
+patch_directory = tree-sitter-go-mod

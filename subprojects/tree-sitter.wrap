@@ -1,0 +1,8 @@
+[wrap-git]
+url = https://github.com/tree-sitter/tree-sitter
+revision = head
+depth = 1
+patch_directory = tree-sitter
+
+[provide]
+tree-sitter = tree_sitter_dep
