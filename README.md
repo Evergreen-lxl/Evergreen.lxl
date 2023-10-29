@@ -115,7 +115,7 @@ languages.add_grammar {
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
-{'TorchedSammy/Evergreen.lxl'}
+{'TorchedSammy/Evergreen.lxl'},
 ```
 
 ## Manually
