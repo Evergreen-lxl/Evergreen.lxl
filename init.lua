@@ -295,11 +295,37 @@ command.add(nil, {
 	end
 })
 
+
+local exts = {}
+
+for k, _ in pairs(languages.grammars) do
+	table.insert(exts, k)
+end
+
+
 command.add(nil, {
 	['evergreen:update-all'] = function()
 		for lang, options in pairs(languages.grammars) do
 			core.log('[Evergreen] updating grammar for language "%s"', lang)
 			installer.installGrammar(options, config)
 		end
+	end
+})
+
+command.add(nil, {
+	['evergreen:update'] = function()
+		core.command_view:enter('Update Treesitter parser for', {
+			submit = function(lang)
+				if not languages.grammars[lang] then
+					core.error('Unknown parser for language ' .. lang)
+					return
+				end
+				core.log('Installing parser for ' .. lang)
+				installer.installGrammar(languages.grammars[lang], config)
+			end,
+			suggest = function()
+				return exts
+			end
+		})
 	end
 })
