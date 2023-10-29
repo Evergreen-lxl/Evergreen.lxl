@@ -13,6 +13,10 @@ system.mkdir(config.dataDir)
 system.mkdir(config.parserLocation)
 
 appendPaths {
+	util.join {USERDIR .. PATHSEP .. 'tree-sitter', '?' .. util.soname},
+	util.join {USERDIR .. PATHSEP .. 'tree-sitter' .. PATHSEP .. 'parsers', 'libtree-sitter-?' .. util.soname},
+	util.join {DATADIR .. PATHSEP .. 'tree-sitter', '?' .. util.soname},
+	util.join {DATADIR .. PATHSEP .. 'tree-sitter' .. PATHSEP .. 'parsers', 'libtree-sitter-?' .. util.soname},
 	util.join {config.dataDir, '?' .. util.soname},
 	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. util.soname},
 	util.join {config.parserLocation, '?', 'parser' .. util.soname},
@@ -184,7 +188,7 @@ end
 local oldTokenize = Highlight.tokenize_line
 function Highlight:tokenize_line(idx, state)
 	if not self.doc.treesit then return oldTokenize(self, idx, state) end
-	
+
 	local txt      = self.doc.lines[idx]
 	local row      = idx - 1
 	local toks     = {}
@@ -237,7 +241,7 @@ function Highlight:tokenize_line(idx, state)
 
 		i = i - 2
 	end
-	
+
 	return {
 		init_state = state,
 		state      = state,
