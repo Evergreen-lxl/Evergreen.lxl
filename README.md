@@ -44,7 +44,8 @@ To use any of this grammars simply add this to your conifg
 local egconfig = require "plugins.evergreen.config"
 
 egconfig.addGrammar {
-  lang = "LANGUAGE"
+  lang = "LANGUAGE",
+  precompiled = true -- optional: default true, if false use default git repository to install grammar
 }
 ```
 
