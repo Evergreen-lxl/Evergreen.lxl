@@ -70,7 +70,7 @@ To add a grammar directly from a git repository add this to your `init.lua` scri
 
 ```lua
 local egconfig = require "plugins.evergreen.config"
-egconfig.add_grammar {
+egconfig.addGrammar {
   git = "GIT REPO",
   lang = "LANGUAGE NAME",
   extensions = "FILE EXTENSIONS", -- optional for extension name based
@@ -84,21 +84,21 @@ egconfig.add_grammar {
 ## Example 
 
 ```lua
-local languages = require "plugins.evergreen.languages"
+local egconfig = require "plugins.evergreen.config"
 
-languages.add_grammar {
+egconfig.addGrammar {
   path = "~/.grammars/tree-sitter-epics/epics-db",
   lang = "epics_db",
   extensions = "db,vdb",
 }
 
-languages.add_grammar {
+egconfig.addGrammar {
   git = "https://github.com/tree-sitter/tree-sitter-cpp.git",
   lang = "cpp",
   extensions = "cpp,hpp,cc",
 }
 
-languages.add_grammar {
+egconfig.addGrammar {
   git = "https://github.com/tree-sitter/tree-sitter-c.git",
   lang = "c",
   extensions = "c,h",
