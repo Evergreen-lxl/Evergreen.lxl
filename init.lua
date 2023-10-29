@@ -13,10 +13,10 @@ system.mkdir(config.dataDir)
 system.mkdir(config.parserLocation)
 
 appendPaths {
-	util.join {USERDIR .. PATHSEP .. 'tree-sitter', '?' .. util.soname},
-	util.join {USERDIR .. PATHSEP .. 'tree-sitter' .. PATHSEP .. 'parsers', 'libtree-sitter-?' .. util.soname},
-	util.join {DATADIR .. PATHSEP .. 'tree-sitter', '?' .. util.soname},
-	util.join {DATADIR .. PATHSEP .. 'tree-sitter' .. PATHSEP .. 'parsers', 'libtree-sitter-?' .. util.soname},
+	util.join {USERDIR, 'tree-sitter', '?' .. util.soname},
+	util.join {USERDIR, 'tree-sitter', 'parsers', 'libtree-sitter-?' .. util.soname},
+	util.join {DATADIR, 'tree-sitter', '?' .. util.soname},
+	util.join {DATADIR, 'tree-sitter', 'parsers', 'libtree-sitter-?' .. util.soname},
 	util.join {config.dataDir, '?' .. util.soname},
 	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. util.soname},
 	util.join {config.parserLocation, '?', 'parser' .. util.soname},
