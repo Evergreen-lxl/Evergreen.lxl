@@ -329,3 +329,22 @@ command.add(nil, {
 		})
 	end
 })
+
+command.add(nil, {
+	['evergreen:clean'] = function()
+		for parser_dir in system.list_dir(config.parserLocation) do
+			local path = util.join { config.parserLocation, parser_dir }
+			if util.isDir(path) and exts[parser_dir] == nil then
+				core.log('[Evergreen] removing unused parser "%s"', parser_dir)
+				util.rmDir(path)
+			end
+		end
+		for query_dir in system.list_dir(config.queryLocation) do
+			local path = util.join { config.queryLocation, query_dir }
+			if util.isDir(path) and exts[query_dir] == nil then
+				core.log('[Evergreen] removing unused queries "%s"', query_dir)
+				util.rmDir(path)
+			end
+		end
+	end
+})
