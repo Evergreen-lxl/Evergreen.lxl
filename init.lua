@@ -4,6 +4,7 @@ local config = require 'plugins.evergreen.config'
 local util = require 'plugins.evergreen.util'
 local home = HOME or os.getenv 'HOME'
 local languages = require 'plugins.evergreen.languages'
+local installer = require 'plugins.evergreen.installer'
 
 local function appendPaths(paths)
 	for _, path in ipairs(paths) do
@@ -290,6 +291,15 @@ command.add(nil, {
 		core.log('[Evergreen] Installed grammars:\n%s', table.concat(installed, '\n'))
 		if errorCounter > 0 then
 			core.warn('[Evergreen] grammars not operational:\n%s', table.concat(notInstalled, '\n'))
+		end
+	end
+})
+
+command.add(nil, {
+	['evergreen:update-all'] = function()
+		for lang, options in pairs(languages.grammars) do
+			core.log('[Evergreen] updating grammar for language "%s"', lang)
+			installer.installGrammar(options, config)
 		end
 	end
 })
