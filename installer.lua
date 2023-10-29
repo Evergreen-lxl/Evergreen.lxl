@@ -57,28 +57,8 @@ local defaults = {
   }
 }
 
-
--- execute proecess
-local function exec(cmd, opts)
-  local proc = process.start(cmd, opts or {})
-  if proc then
-    while proc:running() do
-      coroutine.yield(0.1)
-    end
-    return (proc:read_stdout() or '<no stdout>\n') .. (proc:read_stderr() or '<no stderr>'), proc:returncode()
-  end
-  return nil
-end
-
--- remove directory
-local function rmDir(path)
-  exec(PLATFORM == 'Windows' and
-    { 'cmd', '/c', 'rmdir ' .. path } or
-    { 'sh', '-c', 'rm -rf ' .. path })
-end
-
 local function copyQueries(source, dest)
-  local out, exitCode = exec(PLATFORM == 'Windows' and
+  local out, exitCode = util.exec(PLATFORM == 'Windows' and
     { 'cmd', '/c', 'cp ' .. util.join { source, '*.scm' } .. ' ' .. dest } or
     { 'sh', '-c', 'cp ' .. util.join { source, '*.scm' } .. ' ' .. dest })
   if exitCode ~= 0 then
@@ -89,7 +69,7 @@ end
 
 local function compileParser(lang, path, dest)
   do
-    local out, exitCode = exec(PLATFORM == 'Windows' and
+    local out, exitCode = util.exec(PLATFORM == 'Windows' and
       { 'cmd', '/c', 'gcc -o ' .. util.join { dest, 'parser.so' } .. ' -shared src\\*.c -Os -I.\\src -fPIC' } or
       { 'sh', '-c', 'gcc -o ' .. util.join { dest, 'parser.so' } .. ' -shared src/*.c -Os -I./src -fPIC' },
       { cwd = path })
@@ -139,7 +119,7 @@ local function installQueries(path, options, config)
     mapGrammar(options)
     return true
   end
-  rmDir(queryPath)
+  util.rmDir(queryPath)
   return false
 end
 
@@ -172,10 +152,10 @@ local function installGrammarFromGit(options, config)
     return true
   end
   core.log('[Evergreen] cloning ' .. options.git .. ' in ' .. repo_path)
-  exec({ 'git', 'clone', options.git, options.lang }, { cwd = tmp_path })
+  util.exec({ 'git', 'clone', options.git, options.lang }, { cwd = tmp_path })
   if options.rev ~= nil then
     core.log('[Evergreen] checkout revision ' .. options.rev)
-    exec({ 'git', 'checkout', options.rev }, { cwd = repo_path })
+    util.exec({ 'git', 'checkout', options.rev }, { cwd = repo_path })
   end
 
   local path = util.join { config.parserLocation, options.lang }
@@ -186,7 +166,7 @@ local function installGrammarFromGit(options, config)
     end
     if compileParser(options.lang, repo_path, path) then
       local ok = installQueries(repo_path, options, config)
-      rmDir(repo_path)
+      util.rmDir(repo_path)
       return ok
     end
   else
@@ -205,10 +185,10 @@ local function installGrammarFromURL(options, config)
   system.mkdir(path)
   local out, exitCode
   if PLATFORM == 'Windows' then
-    out, exitCode = exec({ 'powershell', '-Command',
+    out, exitCode = util.exec({ 'powershell', '-Command',
       string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', path, options.url) })
   else
-    out, exitCode = exec({ 'curl', '-L', '--create-dirs', '--output-dir', path, '--fail', options.url, '-o',
+    out, exitCode = util.exec({ 'curl', '-L', '--create-dirs', '--output-dir', path, '--fail', options.url, '-o',
       'parser' .. util.soname })
   end
 

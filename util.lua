@@ -31,4 +31,22 @@ function M.isDir(path)
 	if f ~= nil then return f.type == 'dir' else return false end
 end
 
+-- execute proecess
+function M.exec(cmd, opts)
+  local proc = process.start(cmd, opts or {})
+  if proc then
+    while proc:running() do
+      coroutine.yield(0.1)
+    end
+    return (proc:read_stdout() or '<no stdout>\n') .. (proc:read_stderr() or '<no stderr>'), proc:returncode()
+  end
+  return nil
+end
+
+-- remove directory
+function M.rmDir(path)
+  M.exec(PLATFORM == 'Windows' and
+    { 'cmd', '/c', 'rmdir ' .. path } or
+    { 'sh', '-c', 'rm -rf ' .. path })
+end
 return M
