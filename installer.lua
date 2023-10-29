@@ -6,27 +6,55 @@ local languages = require 'plugins.evergreen.languages'
 -- defualts grammar configuration
 local defaults = {
   c = {
-    extensions = 'c,h'
+    extensions = 'c,h',
+    precompiled = true,
+    git = 'https://github.com/tree-sitter/tree-sitter-c'
   },
   cpp = {
-    extensions = 'cpp,cc,hpp'
+    extensions = 'cpp,cc,hpp',
+    precompiled = true,
+    git = 'https://github.com/tree-sitter/tree-sitter-cpp'
   },
-  d = {},
-  diff = {},
+  d = {
+    precompiled = true,
+    git = 'https://github.com/CyberShadow/tree-sitter-d'
+  },
+  diff = {
+    precompiled = true,
+    git = 'https://github.com/the-mikedavis/tree-sitter-diff'
+  },
+  go = {
+    precompiled = true,
+    git = 'https://github.com/tree-sitter/tree-sitter-go'
+  },
   gomod = {
-    filename = 'go.mod'
+    filename = 'go.mod',
+    precompiled = true,
+    git = 'https://github.com/camdencheek/tree-sitter-go-mod'
   },
-  lua = {},
+  lua = {
+    precompiled = true,
+    git = 'https://github.com/MunifTanjim/tree-sitter-lua'
+  },
   javascript = {
-    extensions = 'jsx,js'
+    extensions = 'jsx,js',
+    precompiled = true,
+    git = 'https://github.com/tree-sitter/tree-sitter-javascript'
   },
   julia = {
-    extensions = 'jl'
+    extensions = 'jl',
+    precompiled = true,
+    git = 'https://github.com/tree-sitter/tree-sitter-julia'
   },
   rust = {
-    extensions = 'rs'
+    extensions = 'rs',
+    precompiled = true,
+    git = 'https://github.com/tree-sitter/tree-sitter-rust'
   },
-  zig = {}
+  zig = {
+    precompiled = true,
+    git = 'https://github.com/maxxnino/tree-sitter-zig'
+  }
 }
 
 
@@ -125,7 +153,7 @@ local function installGrammarFromPath(options, config)
     end
   else
     core.error(
-     '[Evergreen] impossible to install "%s" grammar as path "%s" does not exists.',
+      '[Evergreen] impossible to install "%s" grammar as path "%s" does not exists.',
       options.lang,
       options.path
     )
@@ -219,15 +247,15 @@ function M.addGrammar(options, config)
   for _, field in pairs(required_fields) do
     if not options[field] then
       core.error(
-        '[Evergreen] You need to provide a '%s' field for the grammar.',
+        '[Evergreen] You need to provide a ' % s ' field for the grammar.',
         field
       )
       return false
     end
   end
   languages.grammars[options.lang] = options
-  local lib = util.join { config.parserLocation, options.lang, 'parser.so'}
-  local queries = util.join {config.queryLocation, options.lang, 'highlights.scm'}
+  local lib = util.join { config.parserLocation, options.lang, 'parser.so' }
+  local queries = util.join { config.queryLocation, options.lang, 'highlights.scm' }
   if not util.exists(lib) or not util.exists(queries) then
     if options.git ~= nil then
       core.add_thread(function()
@@ -237,9 +265,13 @@ function M.addGrammar(options, config)
       installGrammar(options, config)
     elseif defaults[options.lang] ~= nil then
       local default = defaults[options.lang]
-      options.url =
-          string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/parsers/tree-sitter-%s%s',
-            options.lang, util.soname)
+      if options.precompiled == nil or options.precompiled then
+        options.url =
+            string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/parsers/tree-sitter-%s%s',
+              options.lang, util.soname)
+      else
+        options.git = default.git
+      end
       if options.extensions == nil and default.extensions ~= nil then
         options.extensions = default.extensions
       end
