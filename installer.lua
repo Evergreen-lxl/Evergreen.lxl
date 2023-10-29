@@ -240,6 +240,34 @@ end
 
 local M = {}
 
+function M.installGrammar(options, config)
+  if options.git ~= nil then
+    core.add_thread(function()
+      installGrammarFromGit(options, config)
+    end)
+  elseif options.path ~= nil or options.url ~= nil then
+    installGrammar(options, config)
+  elseif defaults[options.lang] ~= nil then
+    local default = defaults[options.lang]
+    if options.precompiled == nil or options.precompiled then
+      options.url =
+          string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/parsers/tree-sitter-%s%s',
+            options.lang, util.soname)
+    else
+      options.git = default.git
+    end
+    if options.extensions == nil and default.extensions ~= nil then
+      options.extensions = default.extensions
+    end
+    if options.filename == nil and default.filename ~= nil then
+      options.filename = default.filename
+    end
+    installGrammar(options, config)
+  else
+    core.error('[Evergreen] nor installation mode defined for language %s.', options.lang)
+  end
+end
+
 function M.addGrammar(options, config)
   local required_fields = {
     'lang',
@@ -247,7 +275,7 @@ function M.addGrammar(options, config)
   for _, field in pairs(required_fields) do
     if not options[field] then
       core.error(
-        '[Evergreen] You need to provide a ' % s ' field for the grammar.',
+        '[Evergreen] You need to provide a "%s" field for the grammar.',
         field
       )
       return false
@@ -257,31 +285,7 @@ function M.addGrammar(options, config)
   local lib = util.join { config.parserLocation, options.lang, 'parser.so' }
   local queries = util.join { config.queryLocation, options.lang, 'highlights.scm' }
   if not util.exists(lib) or not util.exists(queries) then
-    if options.git ~= nil then
-      core.add_thread(function()
-        installGrammarFromGit(options, config)
-      end)
-    elseif options.path ~= nil or options.url ~= nil then
-      installGrammar(options, config)
-    elseif defaults[options.lang] ~= nil then
-      local default = defaults[options.lang]
-      if options.precompiled == nil or options.precompiled then
-        options.url =
-            string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/parsers/tree-sitter-%s%s',
-              options.lang, util.soname)
-      else
-        options.git = default.git
-      end
-      if options.extensions == nil and default.extensions ~= nil then
-        options.extensions = default.extensions
-      end
-      if options.filename == nil and default.filename ~= nil then
-        options.filename = default.filename
-      end
-      installGrammar(options, config)
-    else
-      core.error('[Evergreen] nor installation mode defined for language %s.', options.lang)
-    end
+    M.installGrammar(options, config)
   else
     mapGrammar(options)
   end
