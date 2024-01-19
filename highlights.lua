@@ -68,7 +68,7 @@ function M.init(doc)
 					local res = string.find(getSource(n), search)
 					if res then return true end
 
-					while not done do
+					while true do
 						n = n:prev_named_sibling()
 						if not n then break end
 
