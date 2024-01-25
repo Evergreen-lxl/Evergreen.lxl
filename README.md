@@ -22,10 +22,8 @@ it is possible to specify where to find the queries of the language as well as u
 containing more then one language.
 ## Default grammars
 
-A few grammars have default configurations, pre-compiled parsers and custom queries:
-
-The supported languages are:
- 
+A few grammars have default configurations, pre-compiled parsers and custom queries.
+The supported languages are:  
 - [C][tree-sitter-c]
 - [C++][tree-sitter-cpp]
 - [D][tree-sitter-d]
