@@ -15,10 +15,6 @@ local defaults = {
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-cpp'
   },
-  d = {
-    precompiled = true,
-    git = 'https://github.com/CyberShadow/tree-sitter-d'
-  },
   diff = {
     precompiled = true,
     git = 'https://github.com/the-mikedavis/tree-sitter-diff'
