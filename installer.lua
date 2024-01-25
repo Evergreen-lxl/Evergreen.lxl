@@ -6,12 +6,12 @@ local languages = require 'plugins.evergreen.languages'
 -- defualts grammar configuration
 local defaults = {
   c = {
-    extensions = 'c,h',
+    extensions = {'c', 'h'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-c'
   },
   cpp = {
-    extensions = 'cpp,cc,hpp',
+    extensions = {'cpp', 'cc','hpp'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-cpp'
   },
@@ -24,7 +24,7 @@ local defaults = {
     git = 'https://github.com/tree-sitter/tree-sitter-go'
   },
   gomod = {
-    filename = 'go.mod',
+    filenames = {'go.mod'},
     precompiled = true,
     git = 'https://github.com/camdencheek/tree-sitter-go-mod'
   },
@@ -33,17 +33,17 @@ local defaults = {
     git = 'https://github.com/MunifTanjim/tree-sitter-lua'
   },
   javascript = {
-    extensions = 'jsx,js',
+    extensions = {'jsx','js'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-javascript'
   },
   julia = {
-    extensions = 'jl',
+    extensions = {'jl'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-julia'
   },
   rust = {
-    extensions = 'rs',
+    extensions = {'rs'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-rust'
   },
@@ -81,16 +81,16 @@ end
 
 local function mapGrammar(options)
   if options.extensions ~= nil then
-    for ext in options.extensions:gmatch('[^,]+') do
+    for ext in options.extensions do
       languages.extensionMappings[ext] = options.lang
     end
   end
-  if options.filename ~= nil then
-    for name in options.filename:gmatch('[^,]+') do
+  if options.filenames ~= nil then
+    for name in options.filenames do
       languages.filenameMappings[name] = options.lang
     end
   end
-  if options.filename == nil and options.extensions == nil then
+  if options.filenames == nil and options.extensions == nil then
     languages.extensionMappings[options.lang] = options.lang
   end
 end
@@ -235,8 +235,8 @@ function M.installGrammar(options, config)
     if options.extensions == nil and default.extensions ~= nil then
       options.extensions = default.extensions
     end
-    if options.filename == nil and default.filename ~= nil then
-      options.filename = default.filename
+    if options.filenames == nil and default.filenames ~= nil then
+      options.filenames = default.filenames
     end
     installGrammar(options, config)
   else
