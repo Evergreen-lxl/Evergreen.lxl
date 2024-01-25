@@ -26,7 +26,6 @@ A few grammars have default configurations, pre-compiled parsers and custom quer
 The supported languages are:  
 - [C][tree-sitter-c]
 - [C++][tree-sitter-cpp]
-- [D][tree-sitter-d]
 - [Diff][tree-sitter-diff]
 - [Go][tree-sitter-go]
 - [go.mod][tree-sitter-go-mod]
