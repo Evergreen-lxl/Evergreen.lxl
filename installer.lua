@@ -81,12 +81,12 @@ end
 
 local function mapGrammar(options)
   if options.extensions ~= nil then
-    for ext in options.extensions do
+    for _, ext in pairs(options.extensions) do
       languages.extensionMappings[ext] = options.lang
     end
   end
   if options.filenames ~= nil then
-    for name in options.filenames do
+    for _, name in pairs(options.filenames) do
       languages.filenameMappings[name] = options.lang
     end
   end
