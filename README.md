@@ -57,8 +57,8 @@ local egconfig = require "plugins.evergreen.config"
 egconfig.addGrammar {
   path = "YOUR GRAMMAR LOCAL PATH",
   lang = "LANGUAGE NAME",
-  extensions = "FILE EXTENSIONS", -- optional for extension name based
-  filename = "FILE NAME", -- optional for file name based 
+  extensions = {"FILE EXTENSIONS"}, -- optional for extension name based
+  filenames = {"FILE NAME"}, -- optional for file name based 
   queries = "QUERIES SUB PATH", -- optional sub path of grammar queries, default = 'queries'
 }
 ```
@@ -71,8 +71,8 @@ local egconfig = require "plugins.evergreen.config"
 egconfig.addGrammar {
   git = "GIT REPO",
   lang = "LANGUAGE NAME",
-  extensions = "FILE EXTENSIONS", -- optional for extension name based
-  filename = "FILE NAME", -- optional for file name based 
+  extensions = {"FILE EXTENSIONS"}, -- optional for extension name based
+  filenames = {"FILE NAME"}, -- optional for file name based 
   queries = "QUERIES SUB PATH", -- optional sub path of grammar queries, default = 'queries'
   subpath = "GRAMMAR SUB PATH", -- optional sub path if grammar is nested, default = nil
   revision = "SPECIFIC GIT REVISION", -- optional version of the code to clone
@@ -87,19 +87,19 @@ local egconfig = require "plugins.evergreen.config"
 egconfig.addGrammar {
   path = "~/.grammars/tree-sitter-epics/epics-db",
   lang = "epics_db",
-  extensions = "db,vdb",
+  extensions = {"db", "vdb"},
 }
 
 egconfig.addGrammar {
   git = "https://github.com/tree-sitter/tree-sitter-cpp.git",
   lang = "cpp",
-  extensions = "cpp,hpp,cc",
+  extensions = {"cpp", "hpp", "cc"},
 }
 
 egconfig.addGrammar {
   git = "https://github.com/tree-sitter/tree-sitter-c.git",
   lang = "c",
-  extensions = "c,h",
+  extensions = {"c", "h"},
 }
 
 ```
