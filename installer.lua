@@ -148,13 +148,13 @@ local function installGrammarFromGit(options, config)
   system.mkdir(tmp_path)
   local repo_path = util.join { tmp_path, options.lang }
   if util.isDir(repo_path) then
-    core.log('[Evergreen] repository path "%s" exists', repo_path)
+    core.log_quiet('[Evergreen] repository path "%s" exists', repo_path)
     return true
   end
-  core.log('[Evergreen] cloning ' .. options.git .. ' in ' .. repo_path)
+  core.log_quiet('[Evergreen] cloning ' .. options.git .. ' in ' .. repo_path)
   util.exec({ 'git', 'clone', options.git, options.lang }, { cwd = tmp_path })
   if options.rev ~= nil then
-    core.log('[Evergreen] checkout revision ' .. options.rev)
+    core.log_quiet('[Evergreen] checkout revision ' .. options.rev)
     util.exec({ 'git', 'checkout', options.rev }, { cwd = repo_path })
   end
 
