@@ -39,13 +39,12 @@ The supported languages are:
 To use any of this grammars simply add this to your conifg 
 
 ```lua
-local egconfig = require "plugins.evergreen.config"
+local config = require "plugins.evergreen.config"
 
-egconfig.addGrammar {
+config.addGrammar {
   lang = "LANGUAGE",
-  precompiled = true -- optional: default true, if false use default git repository to install grammar
+  precompiled = true -- defaults to true, specifies if language parser is precompiled and available on the evergreen builds repo. all supported languages have precompiled parsers.
 }
-```
 
 
 ## Locally installed grammars
