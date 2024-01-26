@@ -45,8 +45,14 @@ end
 
 -- remove directory
 function M.rmDir(path)
-  M.exec(PLATFORM == 'Windows' and
-    { 'cmd', '/c', 'rmdir ' .. path } or
-    { 'sh', '-c', 'rm -rf ' .. path })
+	for _, name in pairs(system.list_dir(path)) do
+		local fpath = M.join({path, name})
+		if (M.isDir(fpath)) then
+			M.rmDir(fpath)
+		else
+			os.remove(fpath)
+		end
+	end
+	system.rmdir(path)
 end
 return M
