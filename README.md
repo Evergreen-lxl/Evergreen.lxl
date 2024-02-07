@@ -35,77 +35,57 @@ The supported languages are:
 - [Rust][tree-sitter-rust]
 - [Zig][tree-sitter-zig]
 
-To use any of this grammars simply add this to your conifg 
+## Setting up a grammar
+
+It is possible to use a grammar for a specific language from the default
+configurations, from a git repository or from a local installation. To enable
+a grammar you should add a few configuration line to your lite-xl **init.lua**.
+
+### Examples
 
 ```lua
-local config = require "plugins.evergreen.config"
+local egconf = require "plugins.evergreen.config"
 
-config.addGrammar {
-  lang = "LANGUAGE",
-  precompiled = true -- defaults to true, specifies if language parser is precompiled and available on the evergreen builds repo. all supported languages have precompiled parsers.
+-- Activate a default grammar (see list above)
+-- it will automatically download and install the
+-- precompiled grammar and prefered queries.
+egconf.addGrammar {
+	lang = "c", -- name of the language
+	precompiled = true, -- use the precompiled version
 }
 
-
-## Locally installed grammars
-
-To add a grammar to lite-xl simply add the following configuration to your `init.lua` script:
-
-```lua
-local egconfig = require "plugins.evergreen.config"
-
-egconfig.addGrammar {
-  path = "YOUR GRAMMAR LOCAL PATH",
-  lang = "LANGUAGE NAME",
-  extensions = {"FILE EXTENSIONS"}, -- optional for extension name based
-  filenames = {"FILE NAME"}, -- optional for file name based 
-  queries = "QUERIES SUB PATH", -- optional sub path of grammar queries, default = 'queries'
-}
-```
-
-## From git repository 
-To add a grammar directly from a git repository add this to your `init.lua` scripts:
-
-```lua
-local egconfig = require "plugins.evergreen.config"
-egconfig.addGrammar {
-  git = "GIT REPO",
-  lang = "LANGUAGE NAME",
-  extensions = {"FILE EXTENSIONS"}, -- optional for extension name based
-  filenames = {"FILE NAME"}, -- optional for file name based 
-  queries = "QUERIES SUB PATH", -- optional sub path of grammar queries, default = 'queries'
-  subpath = "GRAMMAR SUB PATH", -- optional sub path if grammar is nested, default = nil
-  revision = "SPECIFIC GIT REVISION", -- optional version of the code to clone
-}
-```
-
-## Example 
-
-```lua
-local egconfig = require "plugins.evergreen.config"
-
-egconfig.addGrammar {
-  path = "~/.grammars/tree-sitter-epics/epics-db",
-  lang = "epics_db",
-  extensions = {"db", "vdb"},
+-- Install a grammar from a git repository.
+-- It will automatically clone the repo, build the grammar
+-- and install it with the default queries.
+-- It requires **git** and **gcc**.
+egconf.addGrammar {
+	lang = "cue",
+	git = "https://github.com/eonpatapon/tree-sitter-cue.git" -- git repo
+  -- revision = "...", -- optional specific revision to use
+	-- supath = "...", -- sub path if the grammar is a part of a bigger repository (default ".")
+  -- queries = "...", -- specific folder where queries are found (default "queries/")
+  extensions = { "cue" }, -- list of extensions to match.
+                          -- it can be omitted if the language has the same name of the
+                          -- extension (like in this case)
+  -- filenames = {...}, -- list of filenames to match
 }
 
-egconfig.addGrammar {
-  git = "https://github.com/tree-sitter/tree-sitter-cpp.git",
-  lang = "cpp",
-  extensions = {"cpp", "hpp", "cc"},
+-- Install a grammar from a locally installed folder.
+-- For non-standard grammars or ones that are not in git
+-- you can simply install it manually
+egconf.addGrammar {
+	lang = "epics_db",
+	path = "$HOME/.grammars/tree-sitter-epics/epics-db", -- path where it is installed 
+	-- queries = "...", specific queries sub-path
+  extensions = { "edb", "vdb" }, -- file extensions to match
+  -- filenames = { ... },  -- file names to match
 }
-
-egconfig.addGrammar {
-  git = "https://github.com/tree-sitter/tree-sitter-c.git",
-  lang = "c",
-  extensions = {"c", "h"},
-}
-
 ```
 
 # Requirements
 - Lite XL 2.1+ or [Pragtical](https://github.com/pragtical/pragtical)
 - [ltreesitter](#ltreesitter-installation) (automatic, manually or via LuaRocks)
+- `git` and `gcc` for installing git based grammars
 
 # Install
 ## Express Install
