@@ -75,7 +75,7 @@ egconf.addGrammar {
 -- you can simply install it manually
 egconf.addGrammar {
 	lang = "epics_db",
-	path = "$HOME/.grammars/tree-sitter-epics/epics-db", -- path where it is installed 
+	path = "~/.grammars/tree-sitter-epics/epics-db", -- path where it is installed 
 	-- queries = "...", specific queries sub-path
   extensions = { "edb", "vdb" }, -- file extensions to match
   -- filenames = { ... },  -- file names to match
