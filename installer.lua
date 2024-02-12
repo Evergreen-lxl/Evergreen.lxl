@@ -104,7 +104,7 @@ local function installQueries(path, options, config)
     if util.isDir(defQueries) then
       queries = defQueries
     else
-      queries = util.join { path, options.queries }
+      queries = util.join { path, queries }
     end
   else
     queries = util.join { path, options.queries }
@@ -122,16 +122,17 @@ end
 local function installGrammarFromPath(options, config)
   core.log('[Evergreen] installing parser for languange %s from local path: %s.', options.lang, options.path)
   local path = util.join { config.parserLocation, options.lang }
-  if util.isDir(options.path) then
+  local src_path = util.fixHomePath(options.path)
+  if util.isDir(src_path) then
     system.mkdir(path)
-    if compileParser(options.lang, options.path, path) then
-      return installQueries(options.path, options, config)
+    if compileParser(options.lang, src_path, path) then
+      return installQueries(src_path, options, config)
     end
   else
     core.error(
       '[Evergreen] impossible to install "%s" grammar as path "%s" does not exists.',
       options.lang,
-      options.path
+      src_path
     )
   end
   return false
