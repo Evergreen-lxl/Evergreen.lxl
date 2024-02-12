@@ -55,4 +55,14 @@ function M.rmDir(path)
 	end
 	system.rmdir(path)
 end
+
+-- Replace `~` with home path
+function M.fixHomePath(path)
+	local home = os.getenv('HOME')
+	if home ~= nil then
+		return path:gsub('^~', home)
+	end
+	return path
+end
+
 return M
