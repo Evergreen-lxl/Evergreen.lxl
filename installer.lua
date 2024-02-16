@@ -6,12 +6,12 @@ local languages = require 'plugins.evergreen.languages'
 -- defualts grammar configuration
 local defaults = {
   c = {
-    extensions = {'c', 'h'},
+    filePatterns = {'%.c', '%.h'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-c'
   },
   cpp = {
-    extensions = {'cpp', 'cc','hpp'},
+    filePatterns = {'%.cpp', '%.cc','%.hpp'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-cpp'
   },
@@ -24,7 +24,7 @@ local defaults = {
     git = 'https://github.com/tree-sitter/tree-sitter-go'
   },
   gomod = {
-    filenames = {'go.mod'},
+    filePatterns = {'go.mod'},
     precompiled = true,
     git = 'https://github.com/camdencheek/tree-sitter-go-mod'
   },
@@ -33,17 +33,17 @@ local defaults = {
     git = 'https://github.com/MunifTanjim/tree-sitter-lua'
   },
   javascript = {
-    extensions = {'jsx','js'},
+    filePatterns = {'%.jsx','%.js'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-javascript'
   },
   julia = {
-    extensions = {'jl'},
+    filePatterns = {'%.jl'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-julia'
   },
   rust = {
-    extensions = {'rs'},
+    filePatterns = {'%.rs'},
     precompiled = true,
     git = 'https://github.com/tree-sitter/tree-sitter-rust'
   },
@@ -79,22 +79,6 @@ local function compileParser(lang, path, dest)
   end
 end
 
-local function mapGrammar(options)
-  if options.extensions ~= nil then
-    for _, ext in pairs(options.extensions) do
-      languages.extensionMappings[ext] = options.lang
-    end
-  end
-  if options.filenames ~= nil then
-    for _, name in pairs(options.filenames) do
-      languages.filenameMappings[name] = options.lang
-    end
-  end
-  if options.filenames == nil and options.extensions == nil then
-    languages.extensionMappings[options.lang] = options.lang
-  end
-end
-
 local function installQueries(path, options, config)
   local queryPath = util.join { config.queryLocation, options.lang }
   system.mkdir(queryPath)
@@ -112,7 +96,6 @@ local function installQueries(path, options, config)
   core.log('[Evergreen] installing queries for language %s from %s to %s', options.lang, queries, queryPath)
   if copyQueries(queries, queryPath) then
     core.log('[Evergreen] Finished installing queries for ' .. options.lang)
-    mapGrammar(options)
     return true
   end
   util.rmDir(queryPath)
@@ -233,16 +216,22 @@ function M.installGrammar(options, config)
     else
       options.git = default.git
     end
-    if options.extensions == nil and default.extensions ~= nil then
-      options.extensions = default.extensions
-    end
-    if options.filenames == nil and default.filenames ~= nil then
-      options.filenames = default.filenames
-    end
     installGrammar(options, config)
   else
     core.error('[Evergreen] nor installation mode defined for language %s.', options.lang)
   end
+end
+
+local function fillPatterns(options)
+  if options.filePatterns == nil then
+    local def = defaults[options.lang]
+    if def ~= nil and def.filePatterns ~= nil then
+      options.filePatterns = def.filePatterns
+    else
+      options.filePatterns = { "%."..options.lang}
+    end
+  end
+  return options
 end
 
 function M.addGrammar(options, config)
@@ -258,13 +247,12 @@ function M.addGrammar(options, config)
       return false
     end
   end
-  languages.grammars[options.lang] = options
+
+  languages.grammars[options.lang] = fillPatterns(options)
   local lib = util.join { config.parserLocation, options.lang, 'parser.so' }
   local queries = util.join { config.queryLocation, options.lang, 'highlights.scm' }
   if not util.exists(lib) or not util.exists(queries) then
     M.installGrammar(options, config)
-  else
-    mapGrammar(options)
   end
   return true
 end

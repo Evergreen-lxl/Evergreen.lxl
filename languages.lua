@@ -1,9 +1,5 @@
 local M = {}
-
--- map grammars to file extensions
-M.extensionMappings = {}
--- map grammars to specific file names
-M.filenameMappings = {}
+local core = require 'core'
 -- map of grammar configured
 M.grammars = {}
 
@@ -11,15 +7,15 @@ M.grammars = {}
 function M.fromDoc(doc)
 	-- TODO: hashbang detection
 	if not doc.filename then return end
-
-	local ext = doc.filename:match('%.([^.]+)$')
-	if ext then
-		local extMapping = M.extensionMappings[ext]
-		if extMapping then return extMapping end
+	for lang, options in pairs(M.grammars) do
+		if options.filePatterns ~= nil then
+			for _, ext in pairs(options.filePatterns) do
+				if doc.filename:match(ext .. "$") ~= nil then 
+					return lang
+				end
+			end
+		end
 	end
-
-	-- match explicitly on filename
-	return M.filenameMappings[doc.filename]
 end
 
 return M

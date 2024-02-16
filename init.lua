@@ -276,18 +276,10 @@ command.add(nil, {
 				table.insert(notInstalled, lang)
 			else
 				local str = ' - ' .. lang .. ': '
-				if options.extensions ~= nil then
-					for _, ext in pairs(options.extensions) do
+				if options.filePatterns ~= nil then
+					for _, ext in pairs(options.filePatterns) do
 						str = str .. ext .. ' '
 					end
-				end
-				if options.filename ~= nil then
-					for _, fname in pairs(options.filenames) do
-						str = str .. fname .. ' '
-					end
-				end
-				if options.filename == nil and options.extensions == nil then
-					str = str .. lang
 				end
 				str = str .. ' '
 				table.insert(installed, str)

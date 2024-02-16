@@ -64,10 +64,9 @@ egconf.addGrammar {
   -- revision = "...", -- optional specific revision to use
 	-- supath = "...", -- sub path if the grammar is a part of a bigger repository (default ".")
   -- queries = "...", -- specific folder where queries are found (default "queries/")
-  extensions = { "cue" }, -- list of extensions to match.
+  filePatterns = { "%.cue" }, -- list of regex to match. ('$' is automatically added)
                           -- it can be omitted if the language has the same name of the
                           -- extension (like in this case)
-  -- filenames = {...}, -- list of filenames to match
 }
 
 -- Install a grammar from a locally installed folder.
@@ -77,8 +76,7 @@ egconf.addGrammar {
 	lang = "epics_db",
 	path = "~/.grammars/tree-sitter-epics/epics-db", -- path where it is installed 
 	-- queries = "...", specific queries sub-path
-  extensions = { "edb", "vdb" }, -- file extensions to match
-  -- filenames = { ... },  -- file names to match
+  filePatterns = { "%.edb", "%.vdb" }, -- list of regex to match ('$' is automatically added)
 }
 ```
 
