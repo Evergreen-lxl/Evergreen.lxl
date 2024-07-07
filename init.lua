@@ -20,8 +20,6 @@ appendPaths {
 
 if PLATFORM ~= 'Windows' then
 	appendPaths {
-		'~/.luarocks/lib/lua/5.4/?' .. util.soname,
-		'~/.luarocks/lib64/lua/5.4/?' .. util.soname,
 		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. util.soname,
 		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. util.soname
 	}
@@ -39,30 +37,6 @@ local function exec(cmd, opts)
 	return nil
 end
 
-local ok = package.searchpath('ltreesitter', package.cpath)
-core.log('%s', ok)
-if not ok then
-	core.add_thread(function()
-		core.log 'Could not require ltreesitter, attempting to install...'
-		local url = string.format('https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
-
-		local out, exitCode
-		if PLATFORM == 'Windows' then
-			out, exitCode = exec({'powershell', '-Command', string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s', util.join {config.dataDir, 'ltreesitter' .. util.soname}, url)})
-		else
-			out, exitCode = exec({'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o', 'ltreesitter' .. util.soname})
-		end
-		if exitCode ~= 0 then
-			core.error('An error occured while attempting to download ltreesitter\n%s', out)
-			return
-		else
-			core.log('Finished installing ltreesitter!')
-		end
-		core.reload_module 'plugins.evergreen'
-	end)
-	return
-end
-
 local common = require 'core.common'
 local command = require 'core.command'
 local Doc = require 'core.doc'
@@ -72,6 +46,8 @@ local parser = require 'plugins.evergreen.parser'
 local highlights = require 'plugins.evergreen.highlights'
 require 'plugins.evergreen.style'
 require 'plugins.evergreen.installer'
+
+local ts = require 'libraries.tree_sitter'
 
 --- @class core.doc
 --- @field treesit boolean
@@ -95,26 +71,33 @@ end
 
 local function incrementalHighlight(doc, row)
 	local old = doc.ts.tree
-	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
+	doc.ts.tree = doc.ts.parser:parse(doc.ts.tree, parser.input(doc.lines))
 
-	for _, p in ipairs(old:get_changed_ranges(doc.ts.tree)) do
-		for i = p.start_point.row + 1, p.end_point.row + 1 do
+	for _, r in ipairs(ts.Tree.get_changed_ranges(old, doc.ts.tree):to_table()) do
+		local startRow = r:start_point():row() + 1
+		local endRow   = r:end_point():row() + 1
+
+		for i = startRow, endRow do
 			doc.highlighter.lines[i] = false
 		end
-		doc.highlighter:invalidate(p.start_point.row + 1)
+		doc.highlighter:invalidate(startRow)
 	end
 
-	for n, _ in doc.ts.query:capture(doc.ts.tree:root(), {
-		row    = row - 1,
-		column = 0
-	}, {
-		row    = row - 1,
-		column = #doc.lines[row] - 1
-	}) do
-		for i = n:start_point().row + 1, n:end_point().row + 1 do
+	local cursor = ts.Query.Cursor.new(doc.ts.query, doc.ts.tree:root_node())
+	cursor:set_point_range(
+		ts.Point.new(row - 1, 0),
+		ts.Point.new(row - 1, #doc.lines[row] - 1)
+	)
+
+	for capture in doc.ts.runner:iter_captures(cursor) do
+		local node     = capture:node()
+		local startRow = node:start_point():row() + 1
+		local endRow   = node:end_point():row() + 1
+
+		for i = startRow, endRow do
 			doc.highlighter.lines[i] = false
 		end
-		doc.highlighter:invalidate(n:start_point().row + 1)
+		doc.highlighter:invalidate(startRow)
 	end
 end
 
@@ -128,14 +111,14 @@ function Doc:raw_insert(line, col, text, undo, time)
 		local tsByte = accumulateLen(self.lines, 1, line - 1) + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
-		self.ts.tree:edit_s {
-			start_byte    = tsByte,
-			old_end_byte  = tsByte,
-			new_end_byte  = tsByte + text:len(),
-			start_point   = { row = tsLine, column = tsCol },
-			old_end_point = { row = tsLine, column = tsCol },
-			new_end_point = { row = tsLine, column = tsCol + text:len() },
-		}
+		self.ts.tree:edit(
+			--[[start_byte   ]] tsByte,
+			--[[old_end_byte ]] tsByte,
+			--[[new_end_byte ]] tsByte + text:len(),
+			--[[start_point  ]] ts.Point.new(tsLine, tsCol),
+			--[[old_end_point]] ts.Point.new(tsLine, tsCol),
+			--[[new_end_point]] ts.Point.new(tsLine, tsCol + text:len())
+		)
 		incrementalHighlight(self, line)
 	end
 end
@@ -159,14 +142,14 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 
 		local tsByte = accumulateLen(self.lines, 1, line1 - 1) + col1 - 1
 
-		self.ts.tree:edit_s {
-			start_byte    = tsByte,
-			old_end_byte  = tsByte + text:len(),
-			new_end_byte  = tsByte,
-			start_point   = { row = line1 - 1, column = col1 - 1 },
-			old_end_point = { row = line2 - 1, column = col2 - 1 },
-			new_end_point = { row = line1 - 1, column = col1 - 1 },
-		}
+		self.ts.tree:edit(
+			--[[start_byte   ]] tsByte,
+			--[[old_end_byte ]] tsByte + text:len(),
+			--[[new_end_byte ]] tsByte,
+			--[[start_point  ]] ts.Point.new(line1 - 1, col1 - 1),
+			--[[old_end_point]] ts.Point.new(line2 - 1, col2 - 1),
+			--[[new_end_point]] ts.Point.new(line1 - 1, col1 - 1)
+		)
 		incrementalHighlight(self, line1)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
@@ -191,21 +174,19 @@ function Highlight:tokenize_line(idx, state)
 	local buf      = { 'normal', #txt }
 	local startBuf = 0
 
-	for node, name in self.doc.ts.query:capture(self.doc.ts.tree:root(), {
-		row    = row,
-		column = 0
-	}, {
-		row    = row,
-		column = #txt - 1
-	}) do
+	local cursor = ts.Query.Cursor.new(self.doc.ts.query, self.doc.ts.tree:root_node())
+	cursor:set_point_range(ts.Point.new(row, 0), ts.Point.new(row, #txt - 1))
+
+	for capture in self.doc.ts.runner:iter_captures(cursor) do
+		local node = capture:node()
 		local startPt = node:start_point()
 		local endPt   = node:end_point()
 
-		if row > endPt.row then goto continue end
-		if row < startPt.row then break end
+		if row > endPt:row() then goto continue end
+		if row < startPt:row() then break end
 
-		local startPos = startPt.row < row and 1 or startPt.column + 1
-		local endPos   = endPt.row > row and #txt or endPt.column
+		local startPos = startPt:row() < row and 1 or startPt:column() + 1
+		local endPos   = endPt:row() > row and #txt or endPt:column()
 
 		local i = #buf - 1
 		while i >= 1 and buf[i + 1] < startPos do
@@ -222,7 +203,7 @@ function Highlight:tokenize_line(idx, state)
 		toks[#toks + 1] = txt:sub(startBuf, startPos - 1)
 		startBuf = startPos
 
-		buf[#buf + 1] = name
+		buf[#buf + 1] = capture:name()
 		buf[#buf + 1] = endPos
 
 		::continue::
