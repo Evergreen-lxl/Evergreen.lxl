@@ -66,17 +66,20 @@ function M.findDef(filename)
 
 	for i = #M.defs, 1, -1 do
 		local def = M.defs[i]
+		if not def.files then goto continue end
 
 		for _, pattern in ipairs(def.files) do
 			local s, e = filename:find(pattern)
-			if s then
-				local score = e - s
-				if score > bestScore then
-					bestScore = score
-					bestDef = def
-				end
+			if not s then goto continue end
+
+			local score = e - s
+			if score > bestScore then
+				bestScore = score
+				bestDef = def
 			end
 		end
+
+		::continue::
 	end
 
 	return bestDef
