@@ -1,53 +1,14 @@
--- mod-version:3
+-- mod-version:3 --priority:200
+
 local core = require 'core'
-local config = require 'plugins.evergreen.config'
-local util = require 'plugins.evergreen.util'
-local home = HOME or os.getenv 'HOME'
-local function appendPaths(paths)
-	for _, path in ipairs(paths) do
-		package.cpath = package.cpath .. ';' .. path:gsub('~', home)
-	end
-end
-
-system.mkdir(config.dataDir)
-system.mkdir(config.parserLocation)
-
-appendPaths {
-	util.join {config.dataDir, '?' .. util.soname},
-	util.join {config.parserLocation, '?', 'libtree-sitter-?' .. util.soname},
-	util.join {config.parserLocation, '?', 'parser' .. util.soname},
-}
-
-if PLATFORM ~= 'Windows' then
-	appendPaths {
-		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. util.soname,
-		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. util.soname
-	}
-end
-
-local function exec(cmd, opts)
-	local proc = process.start(cmd, opts or {})
-	if proc then
-		while proc:running() do
-			coroutine.yield(0.1)
-		end
-		return (proc:read_stdout() or '<no stdout>\n') .. (proc:read_stderr() or '<no stderr>'), proc:returncode()
-	end
-
-	return nil
-end
-
-local common = require 'core.common'
 local command = require 'core.command'
 local Doc = require 'core.doc'
 local Highlight = require 'core.doc.highlighter'
-
-local parser = require 'plugins.evergreen.parser'
 local highlights = require 'plugins.evergreen.highlights'
-require 'plugins.evergreen.style'
-require 'plugins.evergreen.installer'
-
+local util = require 'plugins.evergreen.util'
 local ts = require 'libraries.tree_sitter'
+require 'plugins.evergreen.style'
+
 
 --- @class core.doc
 --- @field treesit boolean
@@ -90,7 +51,7 @@ end
 
 local function incrementalHighlight(doc, row)
 	local old = doc.ts.tree
-	doc.ts.tree = doc.ts.parser:parse(doc.ts.tree, parser.input(doc.lines))
+	doc.ts.tree = doc.ts.parser:parse(doc.ts.tree, util.input(doc.lines))
 
 	for _, r in ipairs(ts.Tree.get_changed_ranges(old, doc.ts.tree):to_table()) do
 		local startRow = r:start_point():row() + 1
@@ -187,7 +148,7 @@ function Doc:reload()
 
 	if self.treesit then
 		self:invalidateLen()
-		self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
+		self.ts.tree = self.ts.parser:parse_with(util.input(self.lines))
 	end
 end
 

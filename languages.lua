@@ -1,67 +1,123 @@
-local M = {}
+local core = require 'core'
+local common = require 'core.common'
+local config = require 'plugins.evergreen.config'
+local util = require 'plugins.evergreen.util'
+local ts = require 'libraries.tree_sitter'
 
-local function makeTbl(tbl)
-	local t = {}
-	for exts, ftype in pairs(tbl) do
-		if type(exts) == 'number' then
-			t[ftype] = ftype
-		else
-			for ext in exts:gmatch('[^,]+') do
-				t[ext] = ftype
+local M = {
+	defs = {},
+	langCache = {},
+	queryCache = {
+		highlights = {},
+	},
+}
+
+M.defOptions = {
+	-- Name of the language
+	name = '',
+	-- Filenames to match
+	files = {},
+	-- Path to the directory to install from
+	path = '~',
+	-- Relative path to the shared library
+	-- {SOEXT} will be replaced with the configured shared library extension (e.g. .so / .dll)
+	-- Optional if files is empty or nil
+	soFile = 'parser{SOEXT}',
+	-- Relative path to queries
+	queryFiles = {
+		highlights = 'queries/highlights.scm',
+	},
+}
+
+function M.addDef(defOptions)
+	local def = {}
+
+	assert(defOptions.name, 'Name is required for language definition')
+	assert(not M.defs[defOptions.name], 'Duplicate language name')
+	assert(defOptions.path, 'Path is required for language definition')
+
+	def.name = defOptions.name
+	def.files = defOptions.files
+
+	local path = common.home_expand(defOptions.path)
+
+	if defOptions.files and #defOptions.files > 0 then
+		def.soFile = util.joinPath {
+			path,
+			defOptions.soFile and
+				defOptions.soFile:gsub('{SOEXT}', config.soExt) or
+				'parser' .. config.soExt
+		}
+	end
+
+	def.queryFiles = {}
+	def.queryFiles.highlights = util.joinPath {
+		path,
+		defOptions.queryFiles.highlights or 'queries/highlights.scm'
+	}
+
+	M.defs[#M.defs + 1] = def
+	M.defs[def.name] = def
+end
+
+function M.findDef(filename)
+	local bestScore = 0
+	local bestDef
+
+	for i = #M.defs, 1, -1 do
+		local def = M.defs[i]
+
+		for _, pattern in ipairs(def.files) do
+			local s, e = filename:find(pattern)
+			if s then
+				local score = e - s
+				if score > bestScore then
+					bestScore = score
+					bestDef = def
+				end
 			end
 		end
 	end
-	return t
+
+	return bestDef
 end
 
-M.extensionMappings = makeTbl {
-	['c,h'] = 'c',
-	['cc,cpp,hpp'] = 'cpp',
-	'd',
-	'diff',
-	'go',
-	'lua',
-	['jsx,js'] = 'javascript',
-	['jl'] = 'julia',
-	['rs'] = 'rust',
-	'zig'
-}
-
-M.filenameMappings = {
-	['go.mod'] = 'gomod'
-}
-
--- lists of valid/supported language extensions
--- with their intended parser
-M.exts = {
-	c = 'https://github.com/tree-sitter/tree-sitter-c',
-	cpp = 'https://github.com/tree-sitter/tree-sitter-cpp',
-	d = 'https://github.com/CyberShadow/tree-sitter-d',
-	diff = 'https://github.com/the-mikedavis/tree-sitter-diff',
-	go = 'https://github.com/tree-sitter/tree-sitter-go',
-	gomod = 'https://github.com/camdencheek/tree-sitter-go-mod',
-	javascript = 'https://github.com/tree-sitter/tree-sitter-javascript',
-	julia = 'https://github.com/tree-sitter/tree-sitter-julia',
-	lua = 'https://github.com/MunifTanjim/tree-sitter-lua',
-	rust = 'https://github.com/tree-sitter/tree-sitter-rust',
-	zig = 'https://github.com/maxxnino/tree-sitter-zig'
-}
-
-M.installed = {}
-
---- @param doc core.doc
-function M.fromDoc(doc)
-	-- TODO: hashbang detection
-	if not doc.filename then return end
-
-	local ext = doc.filename:match('%.([^.]+)$')
-	if ext then
-		local extMapping = M.extensionMappings[ext]
-		if extMapping then return extMapping end
+function M.getLang(def)
+	local lang = M.langCache[def.name]
+	if lang then
+		return lang
 	end
 
-	-- match explicitly on filename
-	return M.filenameMappings[doc.filename]
+	local ok, result = pcall(ts.Language.load, def.soFile, def.name)
+	if not ok then
+		core.error('Error loading language ' .. def.name  .. ':\n' .. result)
+		return nil
+	end
+
+	M.langCache[def.name] = result
+	core.log('Loaded language ' .. def.name)
+
+	return result
+end
+
+function M.getQuery(def, queryType)
+	local query = M.queryCache[queryType][def.name]
+	if query then
+		return query
+	end
+
+	local f = io.open(def.queryFiles[queryType])
+	if not f then
+		core.error('Error loading ' .. def.name .. ' ' .. queryType .. ' query')
+		return nil
+	end
+
+	query = f:read '*a'
+	f:close()
+	M.queryCache[queryType][def.name] = query
+	core.log('Loaded ' .. def.name .. ' ' .. queryType .. ' query')
+
+	return query
 end
 
 return M
