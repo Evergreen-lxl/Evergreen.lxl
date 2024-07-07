@@ -112,8 +112,20 @@ function M.getQuery(def, queryType)
 		return nil
 	end
 
-	query = f:read '*a'
+	local builder = {}
+
+	local head = f:read '*l'
+	if head:sub(1, 12) == '; inherits: ' then
+		for name in head:sub(13):gmatch '[%l_]+' do
+			builder[#builder + 1] = M.getQuery(M.defs[name], queryType)
+		end
+	end
+
+	f:seek('set', 0)
+	builder[#builder + 1] = f:read '*a'
 	f:close()
+
+	query = table.concat(builder)
 	M.queryCache[queryType][def.name] = query
 	core.log('Loaded ' .. def.name .. ' ' .. queryType .. ' query')
 
