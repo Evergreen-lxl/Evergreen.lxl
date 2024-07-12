@@ -113,10 +113,12 @@ These are the available highlight groups:
 - `function`: Function declaration
 - `function.call`: Function call
 - `function.macro`
+- `function.builtin`
 - `include`: Keywords related to including modules/packages
 - `keyword.function`: The function operator in a language (like `func` in Go)
 - `keyword.operator`: Operators that are words (like `and`, `or` in Lua)
 - `keyword.return`: The `return` operator
+- `keyword.coroutine`
 - `label`
 - `method`
 - `method.call`
@@ -144,6 +146,7 @@ These are the available highlight groups:
 - `property`: class field
 - `variable`
 - `variable.builtin`: Builtin variables (`this`, `self`)
+- `error`
 
 # License
 MIT
