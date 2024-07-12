@@ -126,7 +126,7 @@ These are the available highlight groups:
 - `parameter`: Parameters to a function (in declaration)
 - `preproc`: Preprocessor directives (`#if` in C)
 - `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
-- `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
+- `punctuation.bracket`: Brackets of all kinds (`()` or `{}`, etc)
 - `punctuation.special`: `#` in rust, treated as an operator by default
 - `repeat`: Keywords relating to loops (`while`, `for`)
 - `storageclass`: `static`, `const` in C
@@ -141,6 +141,7 @@ These are the available highlight groups:
 - `type.builtin`: Builtin types (`int`, `bool`)
 - `type.definition`
 - `type.qualifier`: Type qualifiers (`private`, `public`)
+- `property`: class field
 - `variable`
 - `variable.builtin`: Builtin variables (`this`, `self`)
 
