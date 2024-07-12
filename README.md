@@ -134,6 +134,7 @@ These are the available highlight groups:
 - `storageclass`: `static`, `const` in C
 - `storageclass.lifetime`: Specifically for lifetimes in Rust currently
 - `string`
+- `string.escape`: string special character (e.g.: `\n`)
 - `tag`: HTML/JSX tags
 - `tag.delimiter`: <>
 - `tag.attribute`: Tag attributes
