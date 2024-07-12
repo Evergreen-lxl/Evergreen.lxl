@@ -66,9 +66,10 @@ local altMap = {
 	method = {'method.call'},
 	normal = {
 		'field',
-		'punctuation.brackets',
+		'punctuation.bracket',
 		'punctuation.delimiter',
-		'variable'
+		'variable',
+		'property',
 	},
 	attribute = {
 		'tag.attribute',
