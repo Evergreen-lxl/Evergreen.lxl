@@ -113,10 +113,12 @@ These are the available highlight groups:
 - `function`: Function declaration
 - `function.call`: Function call
 - `function.macro`
+- `function.builtin`
 - `include`: Keywords related to including modules/packages
 - `keyword.function`: The function operator in a language (like `func` in Go)
 - `keyword.operator`: Operators that are words (like `and`, `or` in Lua)
 - `keyword.return`: The `return` operator
+- `keyword.coroutine`
 - `label`
 - `method`
 - `method.call`
@@ -126,12 +128,13 @@ These are the available highlight groups:
 - `parameter`: Parameters to a function (in declaration)
 - `preproc`: Preprocessor directives (`#if` in C)
 - `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
-- `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
+- `punctuation.bracket`: Brackets of all kinds (`()` or `{}`, etc)
 - `punctuation.special`: `#` in rust, treated as an operator by default
 - `repeat`: Keywords relating to loops (`while`, `for`)
 - `storageclass`: `static`, `const` in C
 - `storageclass.lifetime`: Specifically for lifetimes in Rust currently
 - `string`
+- `string.escape`: string special character (e.g.: `\n`)
 - `tag`: HTML/JSX tags
 - `tag.delimiter`: <>
 - `tag.attribute`: Tag attributes
@@ -141,8 +144,10 @@ These are the available highlight groups:
 - `type.builtin`: Builtin types (`int`, `bool`)
 - `type.definition`
 - `type.qualifier`: Type qualifiers (`private`, `public`)
+- `property`: class field
 - `variable`
 - `variable.builtin`: Builtin variables (`this`, `self`)
+- `error`
 
 # License
 MIT
