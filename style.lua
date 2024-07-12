@@ -24,6 +24,9 @@ local altMap = {
 		'number',
 		'label'
 	},
+	string = {
+		'string.escape',
+	},
 	constant = {'constant.builtin'},
 	comment = {
 		'comment.documentation'
