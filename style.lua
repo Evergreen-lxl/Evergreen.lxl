@@ -36,6 +36,7 @@ local altMap = {
 		'include',
 		'keyword.function',
 		'keyword.return',
+		'keyword.coroutine',
 		'namespace',
 		'preproc',
 		'repeat',
@@ -47,6 +48,7 @@ local altMap = {
 		'type.builtin',
 		'variable.builtin',
 		'type.definition',
+		'error',
 	},
 	operator = {
 		'conditional.ternary',
@@ -60,6 +62,7 @@ local altMap = {
 	['function'] = {
 		'function.call',
 		'function.macro',
+		'function.builtin',
 		'method',
 		'tag'
 	},
