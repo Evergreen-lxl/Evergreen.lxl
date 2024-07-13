@@ -173,6 +173,7 @@ function Highlight:tokenize_line(idx, state)
 	local toks     = {}
 	local buf      = { 'normal', #txt }
 	local startBuf = 0
+	state = state or string.char(0)
 
 	local cursor = ts.Query.Cursor.new(self.doc.ts.query, self.doc.ts.tree:root_node())
 	cursor:set_point_range(ts.Point.new(row, 0), ts.Point.new(row, #txt - 1))
