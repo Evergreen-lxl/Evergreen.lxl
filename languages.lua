@@ -77,6 +77,8 @@ function M.findDef(filename)
 				bestScore = score
 				bestDef = def
 			end
+
+			::continue::
 		end
 
 		::continue::
