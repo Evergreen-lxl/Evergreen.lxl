@@ -119,10 +119,16 @@ function M.getQuery(def, queryType)
 
 	local builder = {}
 
-	local head = f:read '*l'
-	if head:sub(1, 12) == '; inherits: ' then
-		for name in head:sub(13):gmatch '[%l_]+' do
-			builder[#builder + 1] = M.getQuery(M.defs[name], queryType)
+	while true do
+		local head = f:read '*l'
+		if head[1] ~= ';' then
+			break
+		end
+
+		if head:sub(1, 12) == '; inherits: ' then
+			for name in head:sub(13):gmatch '[%l_]+' do
+				builder[#builder + 1] = M.getQuery(M.defs[name], queryType)
+			end
 		end
 	end
 
