@@ -15,8 +15,8 @@ local function predicatesFor(doc)
 	end
 
 	local function coerceToStr(n)
-		if type(b) ~= 'string' then
-			return getSource(b:one_node())
+		if type(n) ~= 'string' then
+			return getSource(n:one_node())
 		else
 			return n
 		end
