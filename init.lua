@@ -63,12 +63,13 @@ function Doc:new(filename, abs_filename, new_file)
 end
 
 function Doc:invalidateLen(idx)
-	if self.lenAcculIdx <= idx then return end
-
 	if not idx or idx == 1 then
 		self.lenAccul[1] = #self.lines[1]
 		self.lenAcculIdx = 1
+		return
 	end
+
+	if self.lenAcculIdx <= idx then return end
 
 	self.lenAcculIdx = idx - 1
 end
