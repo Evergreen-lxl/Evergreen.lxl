@@ -1,4 +1,5 @@
 local core = require 'core'
+local command = require 'core.command'
 local common = require 'core.common'
 local config = require 'plugins.evergreen.config'
 local util = require 'plugins.evergreen.util'
@@ -117,16 +118,18 @@ function M.getQuery(def, queryType)
 		return nil
 	end
 
-	local builder = {}
+	local builder = { '; EVERGREEN: BEGIN ' .. def.name .. '\n' }
 
 	while true do
 		local head = f:read '*l'
-		if head[1] ~= ';' then
+		if not head:match '%s*;' then
 			break
 		end
 
-		if head:sub(1, 12) == '; inherits: ' then
-			for name in head:sub(13):gmatch '[%l_]+' do
+		local names = head:match '%s*;+%s*inherits%s*:%s*([%l_,]*)'
+		if names then
+			for name in names:gmatch '[%l_]+' do
+				builder[#builder + 1] = '; EVERGREEN: INHERIT ' .. name .. '\n'
 				builder[#builder + 1] = M.getQuery(M.defs[name], queryType)
 			end
 		end
@@ -136,11 +139,44 @@ function M.getQuery(def, queryType)
 	builder[#builder + 1] = f:read '*a'
 	f:close()
 
+	builder[#builder + 1] = '; EVERGREEN: END ' .. def.name .. '\n'
+
 	query = table.concat(builder)
 	M.queryCache[queryType][def.name] = query
 	core.log('Loaded ' .. def.name .. ' ' .. queryType .. ' query')
 
 	return query
 end
+
+local queryRecents = {}
+
+command.add(nil, {
+	['evergreen:view-highlights-query'] = function()
+		core.command_view:enter('View highlights query for language', {
+			submit = function(name)
+				local def = M.defs[name]
+				if not def then
+					core.error('No such langauge %s', name)
+					return
+				end
+
+				local doc = core.open_doc('highlights.scm')
+				core.root_view:open_doc(doc)
+				doc:insert(1, 1, M.getQuery(def, 'highlights'))
+				doc.new_file = false
+				doc:clean()
+			end,
+
+			suggest = function(name)
+				local names = {}
+				for _, def in ipairs(M.defs) do
+					names[#names + 1] = def.name
+				end
+
+				return common.fuzzy_match_with_recents(names, queryRecents, name)
+			end,
+		})
+	end,
+})
 
 return M
