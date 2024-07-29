@@ -169,6 +169,11 @@ local function predicatesFor(doc)
 	return ret
 end
 
+local disabledCaptures = {
+	'spell',
+	'nospell',
+}
+
 --- @param doc core.doc
 function M.init(doc)
 	local function getSource(n)
@@ -190,7 +195,11 @@ function M.init(doc)
 
 	local queryStr = languages.getQuery(langDef, 'highlights')
 	if not queryStr then return end
+
 	local query = ts.Query.new(lang, queryStr)
+	for _, name in ipairs(disabledCaptures) do
+		query:disable_capture(name)
+	end
 
 	local parser = ts.Parser.new()
 	parser:set_language(lang)
