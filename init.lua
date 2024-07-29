@@ -57,16 +57,33 @@ local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
 	highlights.init(self)
+
+	self.lenAccul = { #self.lines[1] }
+	self.lenAcculIdx = 1
 end
 
-local function accumulateLen(tbl, s, e)
-	local len = 0
-
-	for i=s,e do
-		len = len + tbl[i]:len()
+function Doc:invalidateLen(idx)
+	if not idx or idx == 1 then
+		self.lenAccul[1] = #self.lines[1]
+		self.lenAcculIdx = 1
+		return
 	end
 
-	return len
+	if self.lenAcculIdx <= idx then return end
+
+	self.lenAcculIdx = idx - 1
+end
+
+function Doc:lenLines(s, e)
+	if self.lenAcculIdx < e then
+		for i = self.lenAcculIdx + 1, e do
+			self.lenAccul[i] = self.lenAccul[i - 1] + #self.lines[i]
+		end
+
+		self.lenAcculIdx = e
+	end
+
+	return s == 1 and self.lenAccul[e] or self.lenAccul[e] - self.lenAccul[s - 1]
 end
 
 local function incrementalHighlight(doc, row)
@@ -106,18 +123,20 @@ function Doc:raw_insert(line, col, text, undo, time)
 	oldDocInsert(self, line, col, text, undo, time)
 
 	if self.treesit then
+		self:invalidateLen(line)
+
 		line, col = self:sanitize_position(line, col)
 
-		local tsByte = accumulateLen(self.lines, 1, line - 1) + col - 1
+		local tsByte = self:lenLines(1, line - 1) + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
 		self.ts.tree:edit(
 			--[[start_byte   ]] tsByte,
 			--[[old_end_byte ]] tsByte,
-			--[[new_end_byte ]] tsByte + text:len(),
+			--[[new_end_byte ]] tsByte + #text,
 			--[[start_point  ]] ts.Point.new(tsLine, tsCol),
 			--[[old_end_point]] ts.Point.new(tsLine, tsCol),
-			--[[new_end_point]] ts.Point.new(tsLine, tsCol + text:len())
+			--[[new_end_point]] ts.Point.new(tsLine, tsCol + #text)
 		)
 		incrementalHighlight(self, line)
 	end
@@ -136,15 +155,19 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 		line1, col1 = self:sanitize_position(line1, col1)
 		line2, col2 = self:sanitize_position(line2, col2)
 		line1, col1, line2, col2 = sortPositions(line1, col1, line2, col2)
-		local text = self:get_text(line1, col1, line2, col2)
+
+		local len = line1 == line2 and
+			col2 - col1 or
+			#self.lines[line1] - col1 + self:lenLines(line1 + 1, line2 - 1) + col2
 
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
+		self:invalidateLen(line1)
 
-		local tsByte = accumulateLen(self.lines, 1, line1 - 1) + col1 - 1
+		local tsByte = self:lenLines(1, line1 - 1) + col1 - 1
 
 		self.ts.tree:edit(
 			--[[start_byte   ]] tsByte,
-			--[[old_end_byte ]] tsByte + text:len(),
+			--[[old_end_byte ]] tsByte + len,
 			--[[new_end_byte ]] tsByte,
 			--[[start_point  ]] ts.Point.new(line1 - 1, col1 - 1),
 			--[[old_end_point]] ts.Point.new(line2 - 1, col2 - 1),
@@ -159,7 +182,9 @@ end
 local oldDocReload = Doc.reload
 function Doc:reload()
 	oldDocReload(self)
+
 	if self.treesit then
+		self:invalidateLen()
 		self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
 	end
 end
@@ -234,6 +259,7 @@ command.add('core.docview!', {
 		if dv.doc.ts then
 			dv.doc.treesit = not dv.doc.treesit
 			dv.doc.highlighter:reset()
+			dv.doc:invalidateLen()
 		end
 	end
 })
