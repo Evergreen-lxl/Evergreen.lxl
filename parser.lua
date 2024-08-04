@@ -8,7 +8,7 @@ function M.get(ftype)
 	if not ftype then return end
 	if M._parsers[ftype] then return M._parsers[ftype] end
 
-	local ok, lang = pcall(ts.Language.require, ftype)
+	local ok, result = pcall(ts.Language.require, ftype)
 	local parser
 
 	if not ok then
@@ -17,7 +17,7 @@ function M.get(ftype)
 	else
 		core.log(string.format('Loaded parser for %s', ftype))
 		parser = ts.Parser.new()
-		parser:set_language(lang)
+		parser:set_language(result)
 		M._parsers[ftype] = parser
 	end
 
