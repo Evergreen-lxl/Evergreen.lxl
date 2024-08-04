@@ -4,6 +4,11 @@ local ts = require 'libraries.tree_sitter'
 
 local M = {}
 
+local function localPath()
+	local str = debug.getinfo(2, 'S').source:sub(2)
+	return str:match '(.*[/\\])'
+end
+
 local function predicatesFor(doc)
 	local function getSource(n)
 		local startPt = n:start_point()
