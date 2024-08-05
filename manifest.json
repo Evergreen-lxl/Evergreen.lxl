@@ -1,0 +1,13 @@
+{
+	"addons": [
+		{
+			"id": "evergreen",
+			"description": "🌳 Treesitter support for Lite XL.",
+			"name": "Evergreen.lxl",
+			"mod-version": "3",
+			"version": "0.2",
+			"path": ".",
+			"dependencies": [ "tree_sitter" ]
+		}
+	]
+}
