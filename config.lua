@@ -1,6 +1,9 @@
 local common = require 'core.common'
 
-local M = {}
+local M = {
+	useFallbackColors = true,
+	warnFallbackColors = true,
+}
 
 if PLATFORM ~= 'Windows' then
 	M.soExt = '.so'
