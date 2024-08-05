@@ -24,6 +24,9 @@ local altMap = {
 		'number',
 		'label'
 	},
+	string = {
+		'string.escape',
+	},
 	constant = {'constant.builtin'},
 	comment = {
 		'comment.documentation'
@@ -36,6 +39,7 @@ local altMap = {
 		'include',
 		'keyword.function',
 		'keyword.return',
+		'keyword.coroutine',
 		'namespace',
 		'preproc',
 		'repeat',
@@ -47,6 +51,7 @@ local altMap = {
 		'type.builtin',
 		'variable.builtin',
 		'type.definition',
+		'error',
 	},
 	operator = {
 		'conditional.ternary',
@@ -60,15 +65,17 @@ local altMap = {
 	['function'] = {
 		'function.call',
 		'function.macro',
+		'function.builtin',
 		'method',
 		'tag'
 	},
 	method = {'method.call'},
 	normal = {
 		'field',
-		'punctuation.brackets',
+		'punctuation.bracket',
 		'punctuation.delimiter',
-		'variable'
+		'variable',
+		'property',
 	},
 	attribute = {
 		'tag.attribute',

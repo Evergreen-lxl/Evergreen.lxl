@@ -24,8 +24,6 @@ appendPaths {
 
 if PLATFORM ~= 'Windows' then
 	appendPaths {
-		'~/.luarocks/lib/lua/5.4/?' .. util.soname,
-		'~/.luarocks/lib64/lua/5.4/?' .. util.soname,
 		'~/.local/share/tree-sitter/parsers/tree-sitter-?/libtree-sitter-?' .. util.soname,
 		'~/.local/share/tree-sitter/parsers/tree-sitter-?/parser' .. util.soname
 	}
@@ -42,35 +40,6 @@ local function exec(cmd, opts)
 
 	return nil
 end
-
-local ok = package.searchpath('ltreesitter', package.cpath)
-core.log('%s', ok)
-if not ok then
-	core.add_thread(function()
-		core.log 'Could not require ltreesitter, attempting to install...'
-		local url = string.format(
-			'https://github.com/TorchedSammy/evergreen-builds/releases/download/ltreesitter/ltreesitter%s', util.soname)
-
-		local out, exitCode
-		if PLATFORM == 'Windows' then
-			out, exitCode = exec({ 'powershell', '-Command',
-				string.format('Invoke-WebRequest -OutFile ( New-Item -Path "%s" -Force ) -Uri %s',
-					util.join { config.dataDir, 'ltreesitter' .. util.soname }, url) })
-		else
-			out, exitCode = exec({ 'curl', '-L', '--create-dirs', '--output-dir', config.dataDir, '--fail', url, '-o',
-				'ltreesitter' .. util.soname })
-		end
-		if exitCode ~= 0 then
-			core.error('An error occured while attempting to download ltreesitter\n%s', out)
-			return
-		else
-			core.log('Finished installing ltreesitter!')
-		end
-		core.reload_module 'plugins.evergreen'
-	end)
-	return
-end
-
 local common = require 'core.common'
 local command = require 'core.command'
 local Doc = require 'core.doc'
@@ -80,6 +49,8 @@ local parser = require 'plugins.evergreen.parser'
 local highlights = require 'plugins.evergreen.highlights'
 require 'plugins.evergreen.style'
 
+local ts = require 'libraries.tree_sitter'
+
 --- @class core.doc
 --- @field treesit boolean
 --- @field ts table
@@ -88,40 +59,66 @@ local oldDocNew = Doc.new
 function Doc:new(filename, abs_filename, new_file)
 	oldDocNew(self, filename, abs_filename, new_file)
 	highlights.init(self)
+
+	self.lenAccul = { #self.lines[1] }
+	self.lenAcculIdx = 1
 end
 
-local function accumulateLen(tbl, s, e)
-	local len = 0
-
-	for i = s, e do
-		len = len + tbl[i]:len()
+function Doc:invalidateLen(idx)
+	if not idx or idx == 1 then
+		self.lenAccul[1] = #self.lines[1]
+		self.lenAcculIdx = 1
+		return
 	end
 
-	return len
+	if self.lenAcculIdx <= idx then return end
+
+	self.lenAcculIdx = idx - 1
+end
+
+function Doc:lenLines(s, e)
+	if e < s then return 0 end
+
+	if self.lenAcculIdx < e then
+		for i = self.lenAcculIdx + 1, e do
+			self.lenAccul[i] = self.lenAccul[i - 1] + #self.lines[i]
+		end
+
+		self.lenAcculIdx = e
+	end
+
+	return s == 1 and self.lenAccul[e] or self.lenAccul[e] - self.lenAccul[s - 1]
 end
 
 local function incrementalHighlight(doc, row)
 	local old = doc.ts.tree
-	doc.ts.tree = doc.ts.parser:parse_with(parser.input(doc.lines), doc.ts.tree)
+	doc.ts.tree = doc.ts.parser:parse(doc.ts.tree, parser.input(doc.lines))
 
-	for _, p in ipairs(old:get_changed_ranges(doc.ts.tree)) do
-		for i = p.start_point.row + 1, p.end_point.row + 1 do
+	for _, r in ipairs(ts.Tree.get_changed_ranges(old, doc.ts.tree):to_table()) do
+		local startRow = r:start_point():row() + 1
+		local endRow   = r:end_point():row() + 1
+
+		for i = startRow, endRow do
 			doc.highlighter.lines[i] = false
 		end
-		doc.highlighter:invalidate(p.start_point.row + 1)
+		doc.highlighter:invalidate(startRow)
 	end
 
-	for n, _ in doc.ts.query:capture(doc.ts.tree:root(), {
-		row    = row - 1,
-		column = 0
-	}, {
-		row    = row - 1,
-		column = #doc.lines[row] - 1
-	}) do
-		for i = n:start_point().row + 1, n:end_point().row + 1 do
+	local cursor = ts.Query.Cursor.new(doc.ts.query, doc.ts.tree:root_node())
+	cursor:set_point_range(
+		ts.Point.new(row - 1, 0),
+		ts.Point.new(row - 1, #doc.lines[row] - 1)
+	)
+
+	for capture in doc.ts.runner:iter_captures(cursor) do
+		local node     = capture:node()
+		local startRow = node:start_point():row() + 1
+		local endRow   = node:end_point():row() + 1
+
+		for i = startRow, endRow do
 			doc.highlighter.lines[i] = false
 		end
-		doc.highlighter:invalidate(n:start_point().row + 1)
+		doc.highlighter:invalidate(startRow)
 	end
 end
 
@@ -130,19 +127,21 @@ function Doc:raw_insert(line, col, text, undo, time)
 	oldDocInsert(self, line, col, text, undo, time)
 
 	if self.treesit then
+		self:invalidateLen(line)
+
 		line, col = self:sanitize_position(line, col)
 
-		local tsByte = accumulateLen(self.lines, 1, line - 1) + col - 1
+		local tsByte = self:lenLines(1, line - 1) + col - 1
 		local tsLine, tsCol = line - 1, col - 1
 
-		self.ts.tree:edit_s {
-			start_byte    = tsByte,
-			old_end_byte  = tsByte,
-			new_end_byte  = tsByte + text:len(),
-			start_point   = { row = tsLine, column = tsCol },
-			old_end_point = { row = tsLine, column = tsCol },
-			new_end_point = { row = tsLine, column = tsCol + text:len() },
-		}
+		self.ts.tree:edit(
+			--[[start_byte   ]] tsByte,
+			--[[old_end_byte ]] tsByte,
+			--[[new_end_byte ]] tsByte + #text,
+			--[[start_point  ]] ts.Point.new(tsLine, tsCol),
+			--[[old_end_point]] ts.Point.new(tsLine, tsCol),
+			--[[new_end_point]] ts.Point.new(tsLine, tsCol + #text)
+		)
 		incrementalHighlight(self, line)
 	end
 end
@@ -160,20 +159,24 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 		line1, col1 = self:sanitize_position(line1, col1)
 		line2, col2 = self:sanitize_position(line2, col2)
 		line1, col1, line2, col2 = sortPositions(line1, col1, line2, col2)
-		local text = self:get_text(line1, col1, line2, col2)
+
+		local len = line1 == line2 and
+			col2 - col1 or
+			#self.lines[line1] - col1 + self:lenLines(line1 + 1, line2 - 1) + col2
 
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
+		self:invalidateLen(line1)
 
-		local tsByte = accumulateLen(self.lines, 1, line1 - 1) + col1 - 1
+		local tsByte = self:lenLines(1, line1 - 1) + col1 - 1
 
-		self.ts.tree:edit_s {
-			start_byte    = tsByte,
-			old_end_byte  = tsByte + text:len(),
-			new_end_byte  = tsByte,
-			start_point   = { row = line1 - 1, column = col1 - 1 },
-			old_end_point = { row = line2 - 1, column = col2 - 1 },
-			new_end_point = { row = line1 - 1, column = col1 - 1 },
-		}
+		self.ts.tree:edit(
+			--[[start_byte   ]] tsByte,
+			--[[old_end_byte ]] tsByte + len,
+			--[[new_end_byte ]] tsByte,
+			--[[start_point  ]] ts.Point.new(line1 - 1, col1 - 1),
+			--[[old_end_point]] ts.Point.new(line2 - 1, col2 - 1),
+			--[[new_end_point]] ts.Point.new(line1 - 1, col1 - 1)
+		)
 		incrementalHighlight(self, line1)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
@@ -183,7 +186,9 @@ end
 local oldDocReload = Doc.reload
 function Doc:reload()
 	oldDocReload(self)
+
 	if self.treesit then
+		self:invalidateLen()
 		self.ts.tree = self.ts.parser:parse_with(parser.input(self.lines))
 	end
 end
@@ -197,22 +202,21 @@ function Highlight:tokenize_line(idx, state)
 	local toks     = {}
 	local buf      = { 'normal', #txt }
 	local startBuf = 0
+	state = state or string.char(0)
 
-	for node, name in self.doc.ts.query:capture(self.doc.ts.tree:root(), {
-		row    = row,
-		column = 0
-	}, {
-		row    = row,
-		column = #txt - 1
-	}) do
+	local cursor = ts.Query.Cursor.new(self.doc.ts.query, self.doc.ts.tree:root_node())
+	cursor:set_point_range(ts.Point.new(row, 0), ts.Point.new(row, #txt - 1))
+
+	for capture in self.doc.ts.runner:iter_captures(cursor) do
+		local node = capture:node()
 		local startPt = node:start_point()
 		local endPt   = node:end_point()
 
-		if row > endPt.row then goto continue end
-		if row < startPt.row then break end
+		if row > endPt:row() then goto continue end
+		if row < startPt:row() then break end
 
-		local startPos = startPt.row < row and 1 or startPt.column + 1
-		local endPos   = endPt.row > row and #txt or endPt.column
+		local startPos = startPt:row() < row and 1 or startPt:column() + 1
+		local endPos   = endPt:row() > row and #txt or endPt:column()
 
 		local i        = #buf - 1
 		while i >= 1 and buf[i + 1] < startPos do
@@ -229,7 +233,7 @@ function Highlight:tokenize_line(idx, state)
 		toks[#toks + 1] = txt:sub(startBuf, startPos - 1)
 		startBuf = startPos
 
-		buf[#buf + 1] = name
+		buf[#buf + 1] = capture:name()
 		buf[#buf + 1] = endPos
 
 		::continue::
@@ -259,6 +263,7 @@ command.add('core.docview!', {
 		if dv.doc.ts then
 			dv.doc.treesit = not dv.doc.treesit
 			dv.doc.highlighter:reset()
+			dv.doc:invalidateLen()
 		end
 	end
 })

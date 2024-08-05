@@ -82,18 +82,28 @@ egconf.addGrammar {
 
 # Requirements
 - Lite XL 2.1+ or [Pragtical](https://github.com/pragtical/pragtical)
-- [ltreesitter](#ltreesitter-installation) (automatic, manually or via LuaRocks)
+- `lua_tree_sitter` library
 - `git` and `gcc` for installing git based grammars
 
-# Install
-## Express Install
+# Installation
+## Plugin Manager
+
+### Miq
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
 {'TorchedSammy/Evergreen.lxl'},
 ```
 
-## Manually
+### lpm / ppm
+Evergreen can be installed using [lpm](https://github.com/lite-xl/lite-xl-plugin-manager)
+for Lite XL or [ppm](https://github.com/pragtical/plugin-manager) for Pragtical:
+```
+lpm install evergreen
+ppm install evergreen
+```
+
+## Manual
 - Git clone Evergreen into Lite XL plugins directory
 Or symlink:  
 ```
@@ -102,61 +112,18 @@ git clone https://github.com/TorchedSammy/Evergreen.lxl
 ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
-## ltreesitter Installation
-### Automatic
-The easiest way to install ltreesitter is by not installing it at all!
-Evergreen will automatically download a compatible ltreesitter build and
-reload itself.
+## `lua_tree_sitter` Installation
+### Plugin Manager
 
-If it fails to download for any reason though, that should be reported
-as an issue here. In the mean time, ltreesitter can be installed manually.
+Plugin managers will handle the installation of the `lua_tree_sitter` library
+automatically.
 
 ### Manual Install
-The simplest way to install ltreesitter is to run the following command
-(assuming LuaRocks is installed):
 
-```sh
-luarocks install ltreesitter --local --dev
-```
-
-This may work, but ltreesitter does not officially support Lite XL.
-You may encounter problems when installing it via LuaRocks
-which might return error messages similar to these or cause crashes:
-
-```
-Sat Jun 17 13:36:37 2023 [ERROR] Failed loading /home/user/.luarocks/lib/lua/5.4/ltreesitter.so: /home/user/.luarocks/lib/lua/5.4/ltreesitter.so: undefined symbol: lua_checkstack at /home/user/.local/bin/lite-xl/data/core/init.lua:1226
-
-stack traceback:
-[C]: in function 'system.load_native_plugin'
-[C]: in function 'require'
-...hacuber2a03/.config/lite-xl/plugins/evergreen/parser.lua:2: in main chunk
-[C]: in function 'require'
-.../user/.config/lite-xl/plugins/evergreen/init.lua:21: in main chunk
-[C]: in function 'require'
-[C]: in function 'xpcall'
-/home/user/.local/bin/lite-xl/data/core/init.lua:1225: in function 'core.try'
-/home/user/.local/bin/lite-xl/data/core/init.lua:1013: in function 'core.load_plugins'
-/home/user/.local/bin/lite-xl/data/core/init.lua:793: in function 'core.init'
-[string "local core..."]:8: in function <[string "local core..."]:2>
-[C]: in function 'xpcall'
-[string "local core..."]:2: in main chunk
-```
-
-In that case, you need to install a special version of ltreesitter for Lite XL.
-
-> **Note**
-> You **must** upgrade to the [`master`](https://github.com/lite-xl/lite-xl/tree/master) version of Lite XL.
-
-You can either compile ltreesitter via the command below:
-```sh
-git clone --recursive -b lite-xl-plugin-api https://github.com/takase1121/ltreesitter.git
-cd ltreesitter
-make ltreesitter.so
-cp ltreesitter.so ~/.config/lite-xl/ltreesitter.so
-```
-
-Or download an appropriate release from [here](https://github.com/TorchedSammy/evergreen-builds/releases/tag/ltreesitter),
-where ltreesitter.so is Linux, and ltreesitter.dll is Windows.
+You can download the library from
+[here](https://github.com/xcb-xwii/lite-xl-tree-sitter/releases), and then place
+it inside the `libraries/tree_sitter` directory inside your user directory.
+Rename the binary to `init.so`.
 
 # Usage
 To use Evergreen, you have to install the parser for your language of choice.
@@ -197,10 +164,12 @@ These are the available highlight groups:
 - `function`: Function declaration
 - `function.call`: Function call
 - `function.macro`
+- `function.builtin`
 - `include`: Keywords related to including modules/packages
 - `keyword.function`: The function operator in a language (like `func` in Go)
 - `keyword.operator`: Operators that are words (like `and`, `or` in Lua)
 - `keyword.return`: The `return` operator
+- `keyword.coroutine`
 - `label`
 - `method`
 - `method.call`
@@ -210,12 +179,13 @@ These are the available highlight groups:
 - `parameter`: Parameters to a function (in declaration)
 - `preproc`: Preprocessor directives (`#if` in C)
 - `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
-- `punctuation.brackets`: Brackets of all kinds (`()` or `{}`, etc)
+- `punctuation.bracket`: Brackets of all kinds (`()` or `{}`, etc)
 - `punctuation.special`: `#` in rust, treated as an operator by default
 - `repeat`: Keywords relating to loops (`while`, `for`)
 - `storageclass`: `static`, `const` in C
 - `storageclass.lifetime`: Specifically for lifetimes in Rust currently
 - `string`
+- `string.escape`: string special character (e.g.: `\n`)
 - `tag`: HTML/JSX tags
 - `tag.delimiter`: <>
 - `tag.attribute`: Tag attributes
@@ -225,8 +195,10 @@ These are the available highlight groups:
 - `type.builtin`: Builtin types (`int`, `bool`)
 - `type.definition`
 - `type.qualifier`: Type qualifiers (`private`, `public`)
+- `property`: class field
 - `variable`
 - `variable.builtin`: Builtin variables (`this`, `self`)
+- `error`
 
 # License
 MIT

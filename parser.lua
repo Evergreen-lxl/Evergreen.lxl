@@ -1,5 +1,5 @@
 local core = require 'core'
-local ltreesitter = require 'ltreesitter'
+local ts = require 'libraries.tree_sitter'
 local M = {
 	_parsers = {}
 }
@@ -8,23 +8,29 @@ function M.get(ftype)
 	if not ftype then return end
 	if M._parsers[ftype] then return M._parsers[ftype] end
 
-	local ok, result = pcall(ltreesitter.require, ftype)
+	local ok, result = pcall(ts.Language.require, ftype)
+	local parser
 
 	if not ok then
 		core.error(string.format('Could not load parser for %s\n%s', ftype, result))
 		return nil
 	else
 		core.log(string.format('Loaded parser for %s', ftype))
-		M._parsers[ftype] = result
+		parser = ts.Parser.new()
+		parser:set_language(result)
+		M._parsers[ftype] = parser
 	end
 
-	return result
+	return parser
 end
 
 function M.input(lines)
 	return function(_, point)
-		return (point.row < #lines)
-			and (lines[point.row + 1]:sub(point.column + 1)) or nil
+		if point:row() < #lines then
+			return lines[point:row() + 1], point:column() + 1
+		else
+			return nil
+		end
 	end
 end
 
