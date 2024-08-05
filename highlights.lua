@@ -176,15 +176,6 @@ local disabledCaptures = {
 
 --- @param doc core.doc
 function M.init(doc)
-	local function getSource(n)
-		local startPt = n:start_point()
-		local endPt   = n:end_point()
-		local startRow, startCol = startPt:row() + 1, startPt:column() + 1
-		local endRow, endCol     = endPt:row() + 1, endPt:column()
-
-		return doc:get_text(startRow, startCol, endRow, endCol)
-	end
-
 	if not doc.filename then return end
 
 	local langDef = languages.findDef(doc.abs_filename)
