@@ -75,6 +75,8 @@ function Doc:invalidateLen(idx)
 end
 
 function Doc:lenLines(s, e)
+	if e < s then return 0 end
+
 	if self.lenAcculIdx < e then
 		for i = self.lenAcculIdx + 1, e do
 			self.lenAccul[i] = self.lenAccul[i - 1] + #self.lines[i]
