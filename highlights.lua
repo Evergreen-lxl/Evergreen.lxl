@@ -14,7 +14,7 @@ local function predicatesFor(doc)
 		local startPt = n:start_point()
 		local endPt   = n:end_point()
 		local startRow, startCol = startPt:row() + 1, startPt:column() + 1
-		local endRow, endCol     = endPt:row() + 1, endPt:column()
+		local endRow, endCol     = endPt:row() + 1, endPt:column() + 1
 
 		return doc:get_text(startRow, startCol, endRow, endCol)
 	end
