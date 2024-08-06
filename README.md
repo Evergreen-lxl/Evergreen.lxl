@@ -13,23 +13,6 @@ It is work in progress, but functions well.
 | ---------------------------------------------- | ---------------------------------------------- |
 | ![](before.png)                                |                                 ![](after.png) |
 
-# Supported Languages
-- [x] [C][tree-sitter-c]
-- [x] [C++][tree-sitter-cpp]
-- [ ] CSS
-- [x] [D][tree-sitter-d]
-- [x] [Diff][tree-sitter-diff]
-- [x] [Go][tree-sitter-go]
-- [x] [go.mod][tree-sitter-go-mod]
-- [ ] HTML
-- [x] [Javascript/JSX][tree-sitter-javascript]
-- [x] [Julia][tree-sitter-julia]
-- [x] [Lua][tree-sitter-lua]
-- [x] [Rust][tree-sitter-rust]
-- [x] [Zig][tree-sitter-zig]
-
-If you want more languages supported, open an issue.
-
 # Requirements
 - [Lite XL](https://lite-xl.com) 2.1+ or [Pragtical](https://pragtical.dev)
 - `lua_tree_sitter` library
@@ -54,10 +37,10 @@ ppm install evergreen
 
 ## Manual
 - Git clone Evergreen into Lite XL plugins directory
-Or symlink:  
+- Or symlink:  
 ```
 cd ~/Downloads
-git clone https://github.com/TorchedSammy/Evergreen.lxl
+git clone https://github.com/Evergreen-lxl/Evergreen.lxl
 ln -s ~/Downloads/Evergreen.lxl ~/.config/lite-xl/plugins/evergreen
 ```
 
@@ -70,97 +53,104 @@ automatically.
 ### Manual Install
 
 You can download the library from
-[here](https://github.com/xcb-xwii/lite-xl-tree-sitter/releases), and then place
+[here](https://github.com/Evergreen-lxl/lite-xl-tree-sitter/releases), and then place
 it inside the `libraries/tree_sitter` directory inside your user directory.
 Rename the binary to `init.so`.
 
 # Usage
-To use Evergreen, you have to install the parser for your language of choice.
-This can be done with the `Evergreen: Install` command.  
 
-The next thing to do is add style variables for the highlighting groups in
-your config. This can be done like:
+## Installing support for languages
+
+### Pre-packaged plugins
+
+Automated builds for some languages are available in
+[evergreen-languages](https://github.com/Evergreen-lxl/evergreen-languages).
+Follow the instructions inside the README there to install.
+
+### Manual
+
+Languages can also be manually configured as such:
 ```lua
-local style = require 'core.style'
+local evergreenLangs = require 'plugins.evergreen.languages'
 
-style.syntax['<name>'] = '#ffffff'
+evergreenLangs.addDef {
+	name = 'foo',
+	files = { '%.foo$', '%.bar$' },
+	path = '~/tree-sitter-foo',
+	soFile = 'parser{SOEXT}',
+	queryFiles = {
+		highlights = 'queries/highlights.scm',
+	},
+}
 ```
 
-There are a lot of highlight groups to have better control over what specific
-parts to highlight. This may be overwhelming for some people though, so
-some of these have aliases to the default Lite XL style variables,
-and groups like `keyword.return` will default to the `keyword` group,
-`conditional.ternary` will default to `conditional` if its set, etc.
+| Option                  | Default                    | Description
+| ----------------------  | -------------------------- | -----------
+| `name`                  |                            | identifier for the language. must be unique
+| `files`                 | `{}`                       | list of patterns that matches filenames of this language
+| `path`                  |                            | directory where the shared library and queries are located
+| `soFile`                | `'parser{SOEXT}'`          | location of the shared library inside `path`
+| `queryFiles.highlights` | `'queries/highlights.scm'` | location of the highlights query inside `path`
 
-Evergreen will warn in the log if there are any groups missing, you can
-look at this to see what to set to highlight.
+For `soFile`, the placeholder `{SOEXT}` will be replaced with
+the [configured](#configuration-options) shared library extension.
 
-These are the available highlight groups:  
-- `attribute`
-- `boolean`: A group to highlight booleans specifically
-- `character`
-- `comment`
-- `comment.documentation`: Doc comments
-- `conditional`: Keywords relating to conditionals (`if`/`else`)
-- `conditional.ternary`
-- `constant`
-- `constant.builtin`: Constants that are builtins to the language (Go's `iota`, `nil`)
-- `constructor`: Constructors (like `new` functions)
-- `define`
-- `exception`: Keywords relating to exceptions (`try` and `catch`)
-- `field`: Like a field in a Lua table
-- `float`
-- `function`: Function declaration
-- `function.call`: Function call
-- `function.macro`
-- `function.builtin`
-- `include`: Keywords related to including modules/packages
-- `keyword.function`: The function operator in a language (like `func` in Go)
-- `keyword.operator`: Operators that are words (like `and`, `or` in Lua)
-- `keyword.return`: The `return` operator
-- `keyword.coroutine`
-- `label`
-- `method`
-- `method.call`
-- `namespace`
-- `number`
-- `operator`
-- `parameter`: Parameters to a function (in declaration)
-- `preproc`: Preprocessor directives (`#if` in C)
-- `punctuation.delimiter`: Punctuation that delimits items (`,` and `:`)
-- `punctuation.bracket`: Brackets of all kinds (`()` or `{}`, etc)
-- `punctuation.special`: `#` in rust, treated as an operator by default
-- `repeat`: Keywords relating to loops (`while`, `for`)
-- `storageclass`: `static`, `const` in C
-- `storageclass.lifetime`: Specifically for lifetimes in Rust currently
-- `string`
-- `string.escape`: string special character (e.g.: `\n`)
-- `tag`: HTML/JSX tags
-- `tag.delimiter`: <>
-- `tag.attribute`: Tag attributes
-- `text.diff.add`: Highlights additions in diffs
-- `text.diff.delete`: Highlights deletions in diffs
-- `type`
-- `type.builtin`: Builtin types (`int`, `bool`)
-- `type.definition`
-- `type.qualifier`: Type qualifiers (`private`, `public`)
-- `property`: class field
-- `variable`
-- `variable.builtin`: Builtin variables (`this`, `self`)
-- `error`
+It is perfectly fine to have the parser not exist,
+as long as the `files` option is an empty list or left out.
+This implies that the language definition is only used for
+inheritance from its queries.
+
+## Syntax highlighting groups
+
+Evergreen extends the set of highlight groups that Lite XL provides.
+You can set individual colors for these groups in the `style.syntax` table,
+just as you would with regular syntax types in Lite XL:
+```lua
+local common = require 'core.common'
+local style = require 'core.style'
+
+style.syntax['<name>'] = { common.color '#ffffff' }
+style.syntax['<name>.<subcategory>'] = { common.color '#123456' }
+```
+
+By default, Evergreen has a fallback mechanism for a limited set of highlights.
+The fallbacks cover groups defined by Nvim (see [here](nvim-ts-highlight-groups)).
+A warning is generated if any fallbacks were used.
+
+Evergreen will try to use the colors from default Lite XL syntax types
+to set these fallbacks.
+However, due to not having a close approximate, the fallbacks for these groups
+may not make sense, and you may want to set them explicitly:
+- `diff.plus`
+- `diff.minus`
+- `diff.delta`
+- `comment.error`
+- `comment.warning`
+- `comment.todo`
+- `comment.note`
+
+Additionally, since there are a lot of groups to give more fine-grained control,
+some may find that they do not need to set all of them explicitly.
+If you wish to disable the fallback mechanism or the warning,
+set the respective [configuration options](#configuration-options) correspondingly.
+
+## Configuration options
+
+Set configuration options for Evergreen by adding this to your user module:
+```lua
+local evergreenConfig = require 'plugins.evergreen.config'
+
+evergreenConfig.option1 = false
+evergreenConfig.option2 = 1000
+```
+
+| Option               | Default      | Description
+| -------------------- | ------------ | -----------
+| `useFallbackColors`  | `true`       | set fallbacks for missing colors
+| `warnFallbackColors` | `true`       | warn when fallback colors are used
+| `soExt`              | `.so`/`.dll` | shared library extension (`.dll` on Windows, `.so` otherwise)
 
 # License
 MIT
 
-[tree-sitter-c]: https://github.com/tree-sitter/tree-sitter-c
-[tree-sitter-cpp]: https://github.com/tree-sitter/tree-sitter-cpp
-[tree-sitter-d]: https://github.com/CyberShadow/tree-sitter-d
-[tree-sitter-diff]: https://github.com/the-mikedavis/tree-sitter-diff
-[tree-sitter-go]: https://github.com/tree-sitter/tree-sitter-go
-[tree-sitter-go-mod]: https://github.com/camdencheek/tree-sitter-go-mod
-[tree-sitter-javascript]: https://github.com/tree-sitter/tree-sitter-javascript
-[tree-sitter-julia]: https://github.com/tree-sitter/tree-sitter-julia
-[tree-sitter-lua]: https://github.com/MunifTanjim/tree-sitter-lua
-[tree-sitter-rust]: https://github.com/tree-sitter/tree-sitter-rust
-[tree-sitter-zig]: https://github.com/maxxnino/tree-sitter-zig
-
+[nvim-ts-highlight-groups]: https://neovim.io/doc/user/treesitter.html#_treesitter-syntax-highlighting:~:text=The%20following%20is%20a%20list%20of%20standard%20captures%20used%20in%20queries%20for%20Nvim

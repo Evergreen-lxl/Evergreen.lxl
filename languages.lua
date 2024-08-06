@@ -13,23 +13,6 @@ local M = {
 	},
 }
 
-M.defOptions = {
-	-- Name of the language
-	name = '',
-	-- Filenames to match
-	files = {},
-	-- Path to the directory to install from
-	path = '~',
-	-- Relative path to the shared library
-	-- {SOEXT} will be replaced with the configured shared library extension (e.g. .so / .dll)
-	-- Optional if files is empty or nil
-	soFile = 'parser{SOEXT}',
-	-- Relative path to queries
-	queryFiles = {
-		highlights = 'queries/highlights.scm',
-	},
-}
-
 function M.addDef(defOptions)
 	local def = {}
 
