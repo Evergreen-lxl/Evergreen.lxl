@@ -14,25 +14,76 @@ It is work in progress, but functions well.
 | ![](before.png)                                |                                 ![](after.png) |
 
 # Supported Languages
-- [x] [C][tree-sitter-c]
-- [x] [C++][tree-sitter-cpp]
-- [ ] CSS
-- [x] [D][tree-sitter-d]
-- [x] [Diff][tree-sitter-diff]
-- [x] [Go][tree-sitter-go]
-- [x] [go.mod][tree-sitter-go-mod]
-- [ ] HTML
-- [x] [Javascript/JSX][tree-sitter-javascript]
-- [x] [Julia][tree-sitter-julia]
-- [x] [Lua][tree-sitter-lua]
-- [x] [Rust][tree-sitter-rust]
-- [x] [Zig][tree-sitter-zig]
 
-If you want more languages supported, open an issue.
+Any language supported by `tree-sitter` should (in theory) be supported as well.
+
+It is possible to use grammar installed locally or directly from their git repository. Additionally 
+it is possible to specify where to find the queries of the language as well as use sub path for projects
+containing more then one language.
+## Default grammars
+
+A few grammars have default configurations, pre-compiled parsers and custom queries.
+The supported languages are:  
+- [C][tree-sitter-c]
+- [C++][tree-sitter-cpp]
+- [Diff][tree-sitter-diff]
+- [Go][tree-sitter-go]
+- [go.mod][tree-sitter-go-mod]
+- [Javascript/JSX][tree-sitter-javascript]
+- [Julia][tree-sitter-julia]
+- [Lua][tree-sitter-lua]
+- [Rust][tree-sitter-rust]
+- [Zig][tree-sitter-zig]
+
+## Setting up a grammar
+
+It is possible to use a grammar for a specific language from the default
+configurations, from a git repository or from a local installation. To enable
+a grammar you should add a few configuration line to your lite-xl **init.lua**.
+
+### Examples
+
+```lua
+local egconf = require "plugins.evergreen.config"
+
+-- Activate a default grammar (see list above)
+-- it will automatically download and install the
+-- precompiled grammar and prefered queries.
+egconf.addGrammar {
+	lang = "c", -- name of the language
+	precompiled = true, -- use the precompiled version
+}
+
+-- Install a grammar from a git repository.
+-- It will automatically clone the repo, build the grammar
+-- and install it with the default queries.
+-- It requires **git** and **gcc**.
+egconf.addGrammar {
+	lang = "cue",
+	git = "https://github.com/eonpatapon/tree-sitter-cue.git" -- git repo
+  -- revision = "...", -- optional specific revision to use
+	-- supath = "...", -- sub path if the grammar is a part of a bigger repository (default ".")
+  -- queries = "...", -- specific folder where queries are found (default "queries/")
+  filePatterns = { "%.cue" }, -- list of regex to match. ('$' is automatically added)
+                          -- it can be omitted if the language has the same name of the
+                          -- extension (like in this case)
+}
+
+-- Install a grammar from a locally installed folder.
+-- For non-standard grammars or ones that are not in git
+-- you can simply install it manually
+egconf.addGrammar {
+	lang = "epics_db",
+	path = "~/.grammars/tree-sitter-epics/epics-db", -- path where it is installed 
+	-- queries = "...", specific queries sub-path
+  filePatterns = { "%.edb", "%.vdb" }, -- list of regex to match ('$' is automatically added)
+}
+```
 
 # Requirements
-- [Lite XL](https://lite-xl.com) 2.1+ or [Pragtical](https://pragtical.dev)
+- Lite XL 2.1+ or [Pragtical](https://github.com/pragtical/pragtical)
 - `lua_tree_sitter` library
+- `git` and `gcc` for installing git based grammars
 
 # Installation
 ## Plugin Manager

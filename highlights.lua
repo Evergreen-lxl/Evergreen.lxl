@@ -1,13 +1,10 @@
 local parser = require 'plugins.evergreen.parser'
 local languages = require 'plugins.evergreen.languages'
+local config = require 'plugins.evergreen.config'
 local ts = require 'libraries.tree_sitter'
 
 local M = {}
 
-local function localPath()
-	local str = debug.getinfo(2, 'S').source:sub(2)
-	return str:match '(.*[/\\])'
-end
 
 local function predicatesFor(doc)
 	local function getSource(n)
@@ -170,7 +167,7 @@ local function predicatesFor(doc)
 end
 
 function M.query(ftype)
-	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ftype))
+	local ff = io.open(string.format('%s/%s/highlights.scm', config.queryLocation, ftype))
 	if not ff then
 		return ""
 	end
