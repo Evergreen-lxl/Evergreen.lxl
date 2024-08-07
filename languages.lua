@@ -112,8 +112,20 @@ function M.getQuery(def, queryType)
 		local names = head:match '%s*;+%s*inherits%s*:%s*([%l_,]*)'
 		if names then
 			for name in names:gmatch '[%l_]+' do
+				local inheritDef = M.defs[name]
+				if not inheritDef then
+					core.warn(
+						'Could not find language %s to inherit queries from. \z
+						Syntax highlighting may be incomplete.',
+						name
+					)
+					goto continue
+				end
+
 				builder[#builder + 1] = '; EVERGREEN: INHERIT ' .. name .. '\n'
 				builder[#builder + 1] = M.getQuery(M.defs[name], queryType)
+
+				::continue::
 			end
 		end
 	end
