@@ -44,6 +44,7 @@ local altMap = {
 		'preproc',
 		'repeat',
 		'type.qualifier',
+		'undefine',
 		'constructor'
 	},
 	keyword2 = {
