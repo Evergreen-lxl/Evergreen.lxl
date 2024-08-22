@@ -207,6 +207,10 @@ function Highlight:tokenize_line(idx, state)
 
 	for capture in self.doc.ts.runner:iter_captures(cursor) do
 		local node = capture:node()
+		local name = capture:name()
+
+		if name:find('_', 1, true) then goto continue end
+
 		local startPt = node:start_point()
 		local endPt   = node:end_point()
 
@@ -231,7 +235,7 @@ function Highlight:tokenize_line(idx, state)
 		toks[#toks + 1] = txt:sub(startBuf, startPos - 1)
 		startBuf = startPos
 
-		buf[#buf + 1] = capture:name()
+		buf[#buf + 1] = name
 		buf[#buf + 1] = endPos
 
 		::continue::
