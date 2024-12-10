@@ -1,5 +1,5 @@
-local parser = require 'plugins.evergreen.parser'
 local languages = require 'plugins.evergreen.languages'
+local util = require 'plugins.evergreen.util'
 local ts = require 'libraries.tree_sitter'
 
 local M = {}
@@ -130,10 +130,10 @@ local function predicatesFor(doc)
 				ts[t] = true
 			end
 
-			local a = n:one_node()
+			local a = n:one_node():parent()
 			while a do
-				a = a:parent()
 				if ts[a:type()] then return true end
+				a = a:parent()
 			end
 
 			return false
@@ -169,52 +169,39 @@ local function predicatesFor(doc)
 	return ret
 end
 
-function M.query(ftype)
-	local ff = io.open(string.format('%s/queries/%s/highlights.scm', localPath(), ftype))
-	if not ff then
-		return ""
-	end
-
-	local highlights = ff:read '*a'
-	ff:close()
-
-	return highlights
-end
+local disabledCaptures = {
+	'spell',
+	'nospell',
+}
 
 --- @param doc core.doc
 function M.init(doc)
-	local function getSource(n)
-		local startPt = n:start_point()
-		local endPt   = n:end_point()
-		local startRow, startCol = startPt:row() + 1, startPt:column() + 1
-		local endRow, endCol     = endPt:row() + 1, endPt:column()
-
-		if startRow == endRow then
-			return doc.lines[startRow]:sub(startCol, endCol)
-		end
-
-		local lns = {}
-		lns[1] = doc.lines[startRow]:sub(startCol)
-		for i = startRow + 1, endRow - 1 do
-			lns[#lns + 1] = doc.lines[i]
-		end
-		lns[#lns + 1] = doc.lines[endRow]:sub(1, endCol)
-
-		return table.concat(lns)
-	end
-
 	if not doc.filename then return end
 
-	local p = parser.get(languages.fromDoc(doc))
-	if p then
-		doc.treesit = true
-		doc.ts = {
-			parser = p,
-			tree = p:parse(nil, parser.input(doc.lines)),
-			query = ts.Query.new(p:language(), M.query(languages.fromDoc(doc))),
-			runner = ts.Query.Runner.new(predicatesFor(doc)),
-		}
+	local langDef = languages.findDef(doc.abs_filename)
+	if not langDef then return end
+
+	local lang = languages.getLang(langDef)
+	if not lang then return end
+
+	local queryStr = languages.getQuery(langDef, 'highlights')
+	if not queryStr then return end
+
+	local query = ts.Query.new(lang, queryStr)
+	for _, name in ipairs(disabledCaptures) do
+		query:disable_capture(name)
 	end
+
+	local parser = ts.Parser.new()
+	parser:set_language(lang)
+
+	doc.treesit = true
+	doc.ts = {
+		parser = parser,
+		tree = parser:parse(nil, util.input(doc.lines)),
+		query = query,
+		runner = ts.Query.Runner.new(predicatesFor(doc)),
+	}
 end
 
 

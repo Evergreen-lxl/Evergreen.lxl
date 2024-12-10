@@ -1,12 +1,14 @@
-local util = require 'plugins.evergreen.util'
-local home = HOME or os.getenv 'HOME'
+local common = require 'core.common'
 
 local M = {
-	dataDir = PLATFORM ~= 'Windows'
-	and ('~/.local/share/evergreen'):gsub('~', home)
-	or string.format('%s\\evergreen', os.getenv 'APPDATA')
+	useFallbackColors = true,
+	warnFallbackColors = true,
 }
 
-M.parserLocation = util.join {M.dataDir, 'parsers'}
+if PLATFORM ~= 'Windows' then
+	M.soExt = '.so'
+else
+	M.soExt = '.dll'
+end
 
 return M

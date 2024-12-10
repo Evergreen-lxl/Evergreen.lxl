@@ -1,102 +1,177 @@
 local core = require 'core'
 local style = require 'core.style'
-local missingStyles = {}
-local missingCount = 0
-local totalCount = 0
 
-local function addAlias(to, from, notSyntax)
-	totalCount = totalCount + 1
-	if not style.syntax[to] then
-		missingCount = missingCount + 1
-		table.insert(missingStyles, to)
+local config = require 'plugins.evergreen.config'
 
-		local source = style.syntax
-		if notSyntax then source = style end
-		style.syntax[to] = source[from]
-	end
-end
-
-local altMap = {
-	literal = {
-		'boolean',
-		'constant',
-		'float',
-		'number',
-		'label'
+local fallbackMap = {
+	['normal'] = {
+		'punctuation.delimiter',
+		['punctuation.bracket'] = {
+			'tag.delimiter',
+		},
+		'markup.strong',
+		'markup.italic',
+		'markup.strikethrough',
+		'markup.underline',
+		['markup.heading'] = {
+			'markup.heading.1',
+			'markup.heading.2',
+			'markup.heading.3',
+			'markup.heading.4',
+			'markup.heading.5',
+			'markup.heading.6',
+		},
+		'markup.quote',
+		'markup.math',
+		['markup.raw'] = {
+			'markup.raw.block',
+		},
 	},
-	string = {
+	['symbol'] = {
+		['variable'] = {
+			'variable.builtin',
+			['variable.parameter'] = {
+				'variable.parameter.builtin',
+			},
+			['variable.member'] = {
+				'property',
+				'tag.attribute',
+			},
+		},
+		'label',
+	},
+	['comment'] = {
+		'string.documentation',
+		'comment.documentation',
+		'comment.error',
+		'comment.warning',
+		'comment.todo',
+		'comment.note',
+	},
+	['keyword'] = {
 		'string.escape',
-	},
-	constant = {'constant.builtin'},
-	comment = {
-		'comment.documentation'
-	},
-	keyword = {
-		'attribute',
-		'conditional',
-		'define',
-		'exception',
-		'include',
-		'keyword.function',
-		'keyword.return',
 		'keyword.coroutine',
-		'namespace',
-		'preproc',
-		'repeat',
-		'type.qualifier',
-		'constructor'
-	},
-	keyword2 = {
-		'type', -- this is suitable i think?
-		'type.builtin',
-		'variable.builtin',
-		'type.definition',
-		'error',
-	},
-	operator = {
-		'conditional.ternary',
-		'keyword.operator',
+		'keyword.function',
+		'keyword.import',
+		'keyword.type',
+		'keyword.modifier',
+		'keyword.repeat',
+		'keyword.return',
+		'keyword.debug',
+		'keyword.exception',
+		'keyword.conditional',
+		['keyword.directive'] = {
+			'keyword.directive.define',
+		},
 		'punctuation.special',
-		'storageclass'
+		'tag.builtin',
 	},
-	storageclass = {
-		'storageclass.lifetime'
+	['keyword2'] = {
+		['module'] = {
+			'module.builtin',
+		},
+		['type'] = {
+			'type.builtin',
+			'type.definition',
+		},
+		'constructor',
+	},
+	['number'] = {
+		'number.float',
+	},
+	['literal'] = {
+		['constant'] = {
+			'constant.builtin',
+			'constant.macro',
+		},
+		['character'] = {
+			'character.constant',
+		},
+		'boolean',
+		['markup.list'] = {
+			'markup.list.checked',
+			'markup.list.unchecked',
+		},
+	},
+	['string'] = {
+		'string.regexp',
+		['string.special'] = {
+			'string.special.symbol',
+			'string.special.path',
+			'string.special.url',
+			['markup.link'] = {
+				'markup.link.label',
+				'markup.link.url',
+			},
+		},
+	},
+	['operator'] = {
+		'keyword.operator',
+		'keyword.conditional.ternary',
 	},
 	['function'] = {
+		['attribute'] = {
+			'attribute.builtin',
+		},
+		'function.builtin',
 		'function.call',
 		'function.macro',
-		'function.builtin',
-		'method',
-		'tag'
+		['function.method'] = {
+			'function.method.call',
+		},
+		'tag',
 	},
-	method = {'method.call'},
-	normal = {
-		'field',
-		'punctuation.bracket',
-		'punctuation.delimiter',
-		'variable',
-		'property',
-	},
-	attribute = {
-		'tag.attribute',
-	},
-	tag = {
-		'tag.delimiter'
-	}
 }
 
-addAlias('error', 'error', true)
-addAlias('text.diff.add', 'good', true)
-addAlias('text.diff.delete', 'error', true)
+local function setFallbacks(fallbackMap, colour, missing)
+	if not config.useFallbackColors then return 0 end
 
-for from, tos in pairs(altMap) do
-	for _, to in ipairs(tos) do
-		addAlias(to, from)
+	missing = missing or {}
+
+	for k, v in pairs(fallbackMap) do
+		if type(k) == 'string' then
+			if not style.syntax[k] then
+				style.syntax[k] = colour
+				missing[#missing + 1] = k
+			end
+
+			setFallbacks(v, style.syntax[k], missing)
+		else
+			if not style.syntax[v] then
+				style.syntax[v] = colour
+				missing[#missing + 1] = v
+			end
+		end
+	end
+
+	return missing
+end
+
+local function refreshSyntaxColors()
+	local missing = setFallbacks(fallbackMap)
+
+	if config.warnFallbackColors and #missing > 0 then
+		table.sort(missing)
+
+		core.warn(string.format(
+			'Fallbacks were used for %d colors for Evergreen highlighting.\n\z
+			Disable this message by setting the warnFallbackColors option \z
+			in the module plugins.evergreen.config to false, \z
+			or by specifying all the following syntax colors: \n\t%s',
+			#missing, table.concat(missing, '\n\t')
+		))
 	end
 end
 
-core.add_thread(function()
-	if missingCount > 0 then
-		core.warn(string.format('Missing %d/%d style variables for Evergreen syntax highlighting. To get the full experience, you can set these separately:\n%s', missingCount, totalCount, table.concat(missingStyles, '\n')))
+local oldReloadModule = core.reload_module
+function core.reload_module(name)
+	if name:find('colors.', 1, true) then
+		style.syntax = {}
+		oldReloadModule(name)
+		refreshSyntaxColors(fallbackMap)
+	else
+		oldReloadModule(name)
 	end
-end)
+end
+
+core.add_thread(refreshSyntaxColors)
