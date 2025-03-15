@@ -24,7 +24,7 @@ It is work in progress, but functions well.
 Evergreen can be easily installed with [Miq](https://github.com/TorchedSammy/Miq) by
 adding this to your plugin declaration:
 ```lua
-{'TorchedSammy/Evergreen.lxl'},
+{'Evergreen-lxl/Evergreen.lxl'},
 ```
 
 ### lpm / ppm
