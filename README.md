@@ -4,8 +4,9 @@
 Evergreen adds Treesitter syntax highlighting support for Lite XL.
 It is work in progress, but functions well.
 
-> **Warning**
-> Evergreen is only tested on Linux and will definitely not work on Windows.
+> [!NOTE]
+> Evergreen is only extensively tested on Linux,
+> but it should work correctly on MacOS and Windows based on brief testing.
 
 # Showcase
 
