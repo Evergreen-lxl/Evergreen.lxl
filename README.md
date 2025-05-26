@@ -150,6 +150,7 @@ evergreenConfig.option2 = 1000
 | `useFallbackColors`  | `true`       | set fallbacks for missing colors
 | `warnFallbackColors` | `true`       | warn when fallback colors are used
 | `soExt`              | `.so`/`.dll` | shared library extension (`.dll` on Windows, `.so` otherwise)
+| `maxParseTime`       | `2000`       | maximum time spent parsing before deferring it (in µs). set to 0 to disable deferring
 
 # License
 MIT

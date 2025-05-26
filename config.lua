@@ -3,6 +3,7 @@ local common = require 'core.common'
 local M = {
 	useFallbackColors = true,
 	warnFallbackColors = true,
+	maxParseTime = 2000,
 }
 
 if PLATFORM ~= 'Windows' then
