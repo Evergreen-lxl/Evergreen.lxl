@@ -1,3 +1,4 @@
+local config = require 'plugins.evergreen.config'
 local languages = require 'plugins.evergreen.languages'
 local util = require 'plugins.evergreen.util'
 local ts = require 'libraries.tree_sitter'
@@ -202,6 +203,8 @@ function M.init(doc)
 		query = query,
 		runner = ts.Query.Runner.new(predicatesFor(doc)),
 	}
+
+	parser:set_timeout_micros(config.maxParseTime)
 end
 
 

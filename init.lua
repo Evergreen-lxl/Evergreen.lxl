@@ -49,35 +49,17 @@ function Doc:lenLines(s, e)
 	return s == 1 and self.lenAccul[e] or self.lenAccul[e] - self.lenAccul[s - 1]
 end
 
-local function incrementalHighlight(doc, row)
-	local old = doc.ts.tree
-	doc.ts.tree = doc.ts.parser:parse(doc.ts.tree, util.input(doc.lines))
+local function reparseStep(doc)
+	local newTree = doc.ts.parser:parse(doc.ts.tree, util.input(doc.lines))
 
-	for _, r in ipairs(ts.Tree.get_changed_ranges(old, doc.ts.tree):to_table()) do
-		local startRow = r:start_point():row() + 1
-		local endRow   = r:end_point():row() + 1
+	if not newTree then return true end
 
-		for i = startRow, endRow do
-			doc.highlighter.lines[i] = false
-		end
-		doc.highlighter:invalidate(startRow)
-	end
+	if newTree then
+		doc.ts.tree = newTree
+		doc.ts.reparse = false
+		doc.ts.running = false
 
-	local cursor = ts.Query.Cursor.new(doc.ts.query, doc.ts.tree:root_node())
-	cursor:set_point_range(
-		ts.Point.new(row - 1, 0),
-		ts.Point.new(row - 1, #doc.lines[row] - 1)
-	)
-
-	for capture in doc.ts.runner:iter_captures(cursor) do
-		local node     = capture:node()
-		local startRow = node:start_point():row() + 1
-		local endRow   = node:end_point():row() + 1
-
-		for i = startRow, endRow do
-			doc.highlighter.lines[i] = false
-		end
-		doc.highlighter:invalidate(startRow)
+		doc.highlighter:reset()
 	end
 end
 
@@ -101,7 +83,12 @@ function Doc:raw_insert(line, col, text, undo, time)
 			--[[old_end_point]] ts.Point.new(tsLine, tsCol),
 			--[[new_end_point]] ts.Point.new(tsLine, tsCol + #text)
 		)
-		incrementalHighlight(self, line)
+
+		self.ts.reparse = true
+		self.ts.parser:reset()
+		-- try parsing once immediately, so if the document is not too large,
+		-- the highlighting can updated before the next frame
+		reparseStep(self) 
 	end
 end
 
@@ -136,7 +123,10 @@ function Doc:raw_remove(line1, col1, line2, col2, undo, time)
 			--[[old_end_point]] ts.Point.new(line2 - 1, col2 - 1),
 			--[[new_end_point]] ts.Point.new(line1 - 1, col1 - 1)
 		)
-		incrementalHighlight(self, line1)
+
+		self.ts.reparse = true
+		self.ts.parser:reset()
+		reparseStep(self)
 	else
 		oldDocRemove(self, line1, col1, line2, col2, undo, time)
 	end
@@ -150,6 +140,26 @@ function Doc:reload()
 		self:invalidateLen()
 		self.ts.tree = self.ts.parser:parse_with(util.input(self.lines))
 	end
+end
+
+local oldStart = Highlight.start
+function Highlight:start(...)
+	local doc = self.doc
+
+	if not doc.treesit then return oldStart(self, ...) end
+	if not doc.ts.reparse then return end
+
+	if not doc.ts.running then
+		doc.ts.running = true
+
+		core.add_thread(function()
+			while reparseStep(doc) do
+				coroutine.yield(0)
+			end
+		end, doc)
+	end
+
+	doc.ts.parser:reset()
 end
 
 local oldTokenize = Highlight.tokenize_line
