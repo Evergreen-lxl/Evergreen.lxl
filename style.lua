@@ -124,9 +124,9 @@ local fallbackMap = {
 }
 
 local function setFallbacks(fallbackMap, colour, missing)
-	if not config.useFallbackColors then return 0 end
-
 	missing = missing or {}
+
+	if not config.useFallbackColors then return {} end
 
 	for k, v in pairs(fallbackMap) do
 		if type(k) == 'string' then
