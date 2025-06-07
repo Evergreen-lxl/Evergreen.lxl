@@ -44,6 +44,4 @@ end
 defaults.config_spec     = spec
 config.plugins.evergreen = common.merge(defaults, config.plugins.evergreen)
 
-print(config.plugins.evergreen.soExt)
-
 return config.plugins.evergreen
