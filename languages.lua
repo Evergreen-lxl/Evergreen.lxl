@@ -13,6 +13,8 @@ local M = {
 	},
 }
 
+local soExt = PLATFORM == 'Windows' and '.dll' or '.so'
+
 function M.addDef(defOptions)
 	local def = {}
 
@@ -29,8 +31,8 @@ function M.addDef(defOptions)
 		def.soFile = util.joinPath {
 			path,
 			defOptions.soFile and
-				defOptions.soFile:gsub('{SOEXT}', config.soExt) or
-				'parser' .. config.soExt
+				defOptions.soFile:gsub('{SOEXT}', soExt) or
+				'parser' .. soExt
 		}
 	end
 

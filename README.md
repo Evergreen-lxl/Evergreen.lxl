@@ -133,24 +133,37 @@ may not make sense, and you may want to set them explicitly:
 Additionally, since there are a lot of groups to give more fine-grained control,
 some may find that they do not need to set all of them explicitly.
 If you wish to disable the fallback mechanism or the warning,
-set the respective [configuration options](#configuration-options) correspondingly.
+set the corresponding [configuration options](#configuration-options).
 
 ## Configuration options
 
-Set configuration options for Evergreen by adding this to your user module:
-```lua
-local evergreenConfig = require 'plugins.evergreen.config'
+Since v0.3.1, Evergreen supports the use of the settings GUI.
+Find the options under `Plugins > Evergreen`.
 
-evergreenConfig.option1 = false
-evergreenConfig.option2 = 1000
+Options for Evergreen can be modified in the user module:
+```lua
+local config = require 'core.config'
+
+config.plugins.evergreen.option1 = false
+config.plugins.evergreen.option2 = 1000
 ```
+
+Prior to v0.3.1, options were set in the `plugins.evergreen.config`
+module instead. This is still supported but discouraged to stay consistent
+with other plugins.
+
+### Basic options
 
 | Option               | Default      | Description
 | -------------------- | ------------ | -----------
-| `useFallbackColors`  | `true`       | set fallbacks for missing colors
-| `warnFallbackColors` | `true`       | warn when fallback colors are used
-| `soExt`              | `.so`/`.dll` | shared library extension (`.dll` on Windows, `.so` otherwise)
-| `maxParseTime`       | `2000`       | maximum time spent parsing before deferring it (in µs). set to 0 to disable deferring
+| `useFallbackColors`  | `true`       | Set fallbacks for missing colors
+| `warnFallbackColors` | `true`       | Warn when fallback colors are used
+
+### Advanced options
+
+| Option               | Default      | Description
+| -------------------- | ------------ | -----------
+| `maxParseTime`       | `2000`       | Maximum time spent parsing before deferring it (in µs). Set this to 0 to disable deferring
 
 # License
 MIT
