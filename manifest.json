@@ -5,7 +5,7 @@
 			"description": "🌳 Treesitter support for Lite XL.",
 			"name": "Evergreen.lxl",
 			"mod-version": "3",
-			"version": "0.3",
+			"version": "0.3.1",
 			"path": ".",
 			"dependencies": {
 				"tree_sitter": {
