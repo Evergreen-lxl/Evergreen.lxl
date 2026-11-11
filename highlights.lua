@@ -177,7 +177,7 @@ local disabledCaptures = {
 
 --- @param doc core.doc
 function M.init(doc)
-	if not doc.filename then return end
+	if not (doc.filename and doc.abs_filename) then return end
 
 	local langDef = languages.findDef(doc.abs_filename)
 	if not langDef then return end
