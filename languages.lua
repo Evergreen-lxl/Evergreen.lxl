@@ -19,7 +19,10 @@ function M.addDef(defOptions)
 	local def = {}
 
 	assert(defOptions.name, 'Name is required for language definition')
-	assert(not M.defs[defOptions.name], 'Duplicate language name')
+	if M.defs[defOptions.name] then
+		core.warn('Duplicate language name: %s', defOptions.name)
+		return
+	end
 	assert(defOptions.path, 'Path is required for language definition')
 
 	def.name = defOptions.name
